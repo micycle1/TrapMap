@@ -1,6 +1,6 @@
-package micycle.trapezoidalmap.geometry;
+package micycle.trapmap.geometry;
 
-import micycle.trapezoidalmap.tree.Leaf;
+import micycle.trapmap.tree.Leaf;
 import processing.core.PConstants;
 import processing.core.PShape;
 import processing.core.PVector;

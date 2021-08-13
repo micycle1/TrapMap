@@ -1,4 +1,4 @@
-package micycle.trapezoidalmap.tree;
+package micycle.trapmap.tree;
 
 import processing.core.PVector;
 

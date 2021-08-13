@@ -1,4 +1,4 @@
-package micycle.trapezoidalmap.geometry;
+package micycle.trapmap.geometry;
 
 import processing.core.PVector;
 

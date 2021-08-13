@@ -1,4 +1,4 @@
-package micycle.trapezoidalmap.tree;
+package micycle.trapmap.tree;
 
 import java.util.ArrayList;
 import java.util.List;

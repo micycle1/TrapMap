@@ -1,6 +1,6 @@
-package micycle.trapezoidalmap.tree;
+package micycle.trapmap.tree;
 
-import micycle.trapezoidalmap.geometry.Trapezoid;
+import micycle.trapmap.geometry.Trapezoid;
 
 /**
  * A leaf stores a trapezoid as its data. A leaf should not have child nodes but

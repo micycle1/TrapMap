@@ -1,4 +1,4 @@
-package micycle.trapezoidalmap;
+package micycle.trapmap;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -6,12 +6,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import micycle.trapezoidalmap.geometry.Segment;
-import micycle.trapezoidalmap.geometry.Trapezoid;
-import micycle.trapezoidalmap.tree.Leaf;
-import micycle.trapezoidalmap.tree.Node;
-import micycle.trapezoidalmap.tree.XNode;
-import micycle.trapezoidalmap.tree.YNode;
+import micycle.trapmap.geometry.Segment;
+import micycle.trapmap.geometry.Trapezoid;
+import micycle.trapmap.tree.Leaf;
+import micycle.trapmap.tree.Node;
+import micycle.trapmap.tree.XNode;
+import micycle.trapmap.tree.YNode;
 import processing.core.PVector;
 
 /**
@@ -26,6 +26,8 @@ import processing.core.PVector;
  * @author Michael Carleton (improvements + Processing integration)
  */
 public class TrapezoidalMap {
+	
+	// TODO HANDLE POINT INPUT FOR NEAREST NEIGHBOUR
 
 	private Node root; // root for rooted tree (DAG)
 
