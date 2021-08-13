@@ -1,6 +1,7 @@
-package data;
+package micycle.trapezoidalmap.data;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Represents an abstract node with parents, left child, and right child The
@@ -9,10 +10,11 @@ import java.util.ArrayList;
  * @author Tyler Chenhall
  */
 public abstract class Node {
+	
 	private Node parent = null;
 	private Node leftChild = null;
 	private Node rightChild = null;
-	private ArrayList<Node> parents;
+	private List<Node> parents;
 
 	public Node() {
 		parents = new ArrayList<>(1);
@@ -34,8 +36,7 @@ public abstract class Node {
 	 * 
 	 * @return The ArrayList containing all parent nodes
 	 */
-	public ArrayList<Node> getParentNodes() {
-		// System.out.println(parents.size());
+	public List<Node> getParentNodes() {
 		return parents;
 	}
 

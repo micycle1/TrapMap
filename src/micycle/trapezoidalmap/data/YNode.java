@@ -1,4 +1,4 @@
-package data;
+package micycle.trapezoidalmap.data;
 
 /**
  * A y-node stores a segment
@@ -6,6 +6,7 @@ package data;
  * @author Tyler Chenhall
  */
 public class YNode extends Node {
+
 	private Segment data;
 
 	public YNode(Segment s) {

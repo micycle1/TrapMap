@@ -1,4 +1,4 @@
-package gui;
+package micycle.trapezoidalmap.gui;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -9,12 +9,13 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
-import data.Point;
-import data.Segment;
+import micycle.trapezoidalmap.data.Segment;
+import processing.core.PVector;
 
 /**
  * This class describes the display panel for the project The GUI displays all
@@ -25,11 +26,11 @@ import data.Segment;
 public class DrawSegments extends JPanel implements Runnable {
 
 	private static final int DELAY = 25;// (25) pause between repaints
-	private Point lastOrigin;
-	private Point lastPoint;
+	private PVector lastOrigin;
+	private PVector lastPoint;
 	// coordinates of the last mouse Press event
-	private int xval;
-	private int yval;
+	private float xval;
+	private float yval;
 	// records type of mouse event
 	private boolean shiftPressed;
 	private boolean leftClick;
@@ -37,7 +38,7 @@ public class DrawSegments extends JPanel implements Runnable {
 	// click point color
 	private Color cc = Color.green;
 	private Thread t;
-	private ArrayList<Segment> segments;
+	private List<Segment> segments;
 
 	/**
 	 * Initialize the DisplayPanel with a list of segments to be used for this run.
@@ -119,18 +120,18 @@ public class DrawSegments extends JPanel implements Runnable {
 				// left
 				if (lastOrigin == null) {
 					// if we have no segments, make a new origin point and last point but no segment
-					lastOrigin = new Point(xval, yval);
-					lastPoint = new Point(xval, yval);
+					lastOrigin = new PVector(xval, yval);
+					lastPoint = new PVector(xval, yval);
 				} else {
 					// else create a segment using the last point
-					Segment ns = new Segment(lastPoint, new Point(xval, yval));
+					Segment ns = new Segment(lastPoint, new PVector(xval, yval));
 					// check for intersections
 					if (intersects(ns)) {
 						cc = Color.red;
 					} else {
 						cc = Color.green;
 						segments.add(ns);
-						lastPoint = new Point(xval, yval);
+						lastPoint = new PVector(xval, yval);
 					}
 				}
 
@@ -139,8 +140,8 @@ public class DrawSegments extends JPanel implements Runnable {
 				// creates a new origin point to start a new figure but does not close the old
 				// one
 				// no new segment is created
-				lastOrigin = new Point(xval, yval);
-				lastPoint = new Point(xval, yval);
+				lastOrigin = new PVector(xval, yval);
+				lastPoint = new PVector(xval, yval);
 				cc = Color.green;
 			} else if (!leftClick && !shiftPressed) {
 				// right

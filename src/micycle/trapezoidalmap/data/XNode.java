@@ -1,4 +1,6 @@
-package data;
+package micycle.trapezoidalmap.data;
+
+import processing.core.PVector;
 
 /**
  * An X node stores a segment end point
@@ -6,9 +8,10 @@ package data;
  * @author Tyler Chenhall
  */
 public class XNode extends Node {
-	private Point data;
+	
+	private PVector data;
 
-	public XNode(Point p) {
+	public XNode(PVector p) {
 		super();
 		data = p;
 	}
@@ -18,7 +21,7 @@ public class XNode extends Node {
 	 * 
 	 * @return The Point data
 	 */
-	public Point getData() {
+	public PVector getData() {
 		return data;
 	}
 }

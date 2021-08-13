@@ -1,4 +1,4 @@
-package gui;
+package micycle.trapezoidalmap.gui;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -13,10 +13,10 @@ import java.util.ArrayList;
 
 import javax.swing.JPanel;
 
-import data.Point;
-import data.SearchStructure;
-import data.Segment;
-import data.Trapezoid;
+import micycle.trapezoidalmap.data.SearchStructure;
+import micycle.trapezoidalmap.data.Segment;
+import micycle.trapezoidalmap.data.Trapezoid;
+import processing.core.PVector;
 
 /**
  * This class describes the display panel for the project The GUI displays all
@@ -88,7 +88,7 @@ public class DisplayPanel extends JPanel implements Runnable {
 	public void cycle() {
 		// do any necessary update calculations between display stuff
 		// there may not be anything here
-		highlighted = search.findPointTrap(new Point(xval, yval));
+		highlighted = search.findPointTrap(new PVector(xval, yval));
 	}
 
 	@Override

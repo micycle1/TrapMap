@@ -1,6 +1,8 @@
-package data;
+package micycle.trapezoidalmap.data;
 
 import java.awt.Polygon;
+
+import processing.core.PVector;
 
 /**
  * Represents a trapezoid object in the trapezoidal map or search structure.
@@ -18,8 +20,8 @@ public final class Trapezoid {
 	private Trapezoid lright_neighbor;
 	private Leaf owner;
 	// variables describing the trapezoid shape
-	private Point leftP;
-	private Point rightP;
+	private PVector leftP;
+	private PVector rightP;
 	private Segment topSeg;
 	private Segment botSeg;
 	private Polygon poly;
@@ -41,7 +43,7 @@ public final class Trapezoid {
 	 * uleft_neighbor = null; lleft_neighbor = null; uright_neighbor = null;
 	 * lright_neighbor = null; }
 	 */
-	public Trapezoid(Point left, Point right, Segment top, Segment bottom) {
+	public Trapezoid(PVector left,PVector right, Segment top, Segment bottom) {
 		leftP = left;
 		rightP = right;
 		topSeg = top;
@@ -62,7 +64,7 @@ public final class Trapezoid {
 	 * 
 	 * @return The left vertex
 	 */
-	public Point getLeftBound() {
+	public PVector getLeftBound() {
 		return leftP;
 	}
 
@@ -71,7 +73,7 @@ public final class Trapezoid {
 	 * 
 	 * @return The right bounding vertex
 	 */
-	public Point getRightBound() {
+	public PVector getRightBound() {
 		return rightP;
 	}
 
@@ -173,10 +175,10 @@ public final class Trapezoid {
 	 * @return The array of segments representing the boundary
 	 */
 	public Segment[] getBoundary() {
-		Point tl = topSeg.intersect(leftP.getX());
-		Point tr = topSeg.intersect(rightP.getX());
-		Point bl = botSeg.intersect(leftP.getX());
-		Point br = botSeg.intersect(rightP.getX());
+		PVector tl = topSeg.intersect(leftP.x);
+		PVector tr = topSeg.intersect(rightP.x);
+		PVector bl = botSeg.intersect(leftP.x);
+		PVector br = botSeg.intersect(rightP.x);
 		Segment[] segs = { new Segment(tl, tr), new Segment(tr, br), new Segment(br, bl), new Segment(bl, tl) };
 
 		// Line2D.Double[] arr = {topSeg.getline(), botSeg.getline()};
@@ -188,14 +190,14 @@ public final class Trapezoid {
 	 *
 	 * @return The polygon object representing the boundary of the Trapezoid
 	 */
-	private Polygon getPrivateBoundaryPolygon(Point left, Point right, Segment top, Segment bottom) {
-		Point tl = top.intersect(left.getX());
-		Point tr = top.intersect(right.getX());
-		Point bl = bottom.intersect(left.getX());
-		Point br = bottom.intersect(right.getX());
-		int[] xx = { tl.getX(), tr.getX(), br.getX(), bl.getX() };
-		int[] yy = { tl.getY(), tr.getY(), br.getY(), bl.getY() };
-		return new Polygon(xx, yy, 4);
+	private Polygon getPrivateBoundaryPolygon(PVector left, PVector right, Segment top, Segment bottom) {
+		PVector tl = top.intersect(left.x);
+		PVector tr = top.intersect(right.x);
+		PVector bl = bottom.intersect(left.x);
+		PVector br = bottom.intersect(right.x);
+		int[] xx = { (int) tl.x, (int)tr.x, (int)br.x, (int)bl.x };
+		int[] yy = { (int)tl.y, (int)tr.y, (int)br.y,(int) bl.y };
+		return new Polygon(xx, yy, 4); // TODO TO PSHAPE
 	}
 
 	/**

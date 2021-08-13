@@ -1,12 +1,12 @@
-package pointsearch;
+package micycle.trapezoidalmap.pointsearch;
 
 import javax.swing.JFrame;
 import javax.swing.WindowConstants;
 
-import data.SearchStructure;
-import data.Segment;
-import gui.DisplayPanel;
-import gui.DrawSegments;
+import micycle.trapezoidalmap.gui.DisplayPanel;
+import micycle.trapezoidalmap.gui.DrawSegments;
+import micycle.trapezoidalmap.data.SearchStructure;
+import micycle.trapezoidalmap.data.Segment;
 
 /**
  * @author Tyler Chenhall

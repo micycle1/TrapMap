@@ -1,4 +1,4 @@
-package data;
+package micycle.trapezoidalmap.data;
 
 /**
  * A leaf stores a trapezoid as its data. a leaf should not have child nodes but

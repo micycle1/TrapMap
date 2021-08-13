@@ -1,6 +1,8 @@
-package data;
+package micycle.trapezoidalmap.data;
 
 import java.awt.geom.Line2D;
+
+import processing.core.PVector;
 
 /**
  * Represents a segment by its endpoints. Endpoints are stored in order as given
@@ -10,25 +12,24 @@ import java.awt.geom.Line2D;
  */
 public class Segment {
 
-	private Point lpoint;
-	private Point rpoint;
+	public PVector lpoint;
+	public PVector rpoint;
 	private Line2D.Double l;// for display purposes
 
-	public Segment(Point one, Point two) {
+	public Segment(PVector one, PVector two) {
 		// we store the left, lower point as lpoint
 		// the other point is stored as rpoint
-		if (one.getX() == two.getX()) {
+		if (one.x == two.x) {
 			System.err.println("same X");
 		}
-		System.err.println();
-		if (one.compareTo(two) <= 0) {
+		if (compareTo(one, two) <= 0) {
 			lpoint = one;
 			rpoint = two;
 		} else {
 			lpoint = two;
 			rpoint = one;
 		}
-		l = new Line2D.Double(lpoint.getX(), lpoint.getY(), rpoint.getX(), rpoint.getY());
+		l = new Line2D.Double(lpoint.x, lpoint.y, rpoint.x, rpoint.y);
 	}
 
 	/**
@@ -37,7 +38,7 @@ public class Segment {
 	 *
 	 * @return The left segment endpoint
 	 */
-	public Point getLeftEndPoint() {
+	public PVector getLeftEndPoint() {
 		return lpoint;
 	}
 
@@ -47,7 +48,7 @@ public class Segment {
 	 *
 	 * @return The right segment endpoint
 	 */
-	public Point getRightEndPoint() {
+	public PVector getRightEndPoint() {
 		return rpoint;
 	}
 
@@ -57,8 +58,8 @@ public class Segment {
 	 *
 	 * @return The minimum x value
 	 */
-	public int getMinX() {
-		return lpoint.getX();
+	public float getMinX() {
+		return lpoint.x;
 	}
 
 	/**
@@ -66,8 +67,8 @@ public class Segment {
 	 *
 	 * @return The maximum x value
 	 */
-	public int getMaxX() {
-		return rpoint.getX();
+	public float getMaxX() {
+		return rpoint.x;
 	}
 
 	/**
@@ -75,8 +76,8 @@ public class Segment {
 	 *
 	 * @return The minimum y value
 	 */
-	public int getMinY() {
-		return Math.min(lpoint.getY(), rpoint.getY());
+	public float getMinY() {
+		return Math.min(lpoint.y, rpoint.y);
 	}
 
 	/**
@@ -84,8 +85,8 @@ public class Segment {
 	 *
 	 * @return The maximum y value
 	 */
-	public int getMaxY() {
-		return Math.max(lpoint.getY(), rpoint.getY());
+	public float getMaxY() {
+		return Math.max(lpoint.y, rpoint.y);
 	}
 
 	/**
@@ -115,14 +116,14 @@ public class Segment {
 	 * @param x The x-value to intersect the line at
 	 * @return The point on the line (segment) at the given x-value
 	 */
-	public Point intersect(int x) {
-		if (lpoint.getX() != rpoint.getX()) {
+	public PVector intersect(float x) {
+		if (lpoint.x != rpoint.x) {
 
-			long ysum = ((long) (x - lpoint.getX())) * ((long) rpoint.getY()) + ((long) (rpoint.getX() - x)) * ((long) lpoint.getY());
-			double yval = (ysum * 1.0) / (rpoint.getX() - lpoint.getX());
-			return new Point(x, (int) yval);
+			float ysum = ((x - lpoint.x)) * (rpoint.y) + ((rpoint.x - x)) * (lpoint.y);
+			float yval = ysum / (rpoint.x - lpoint.x);
+			return new PVector(x, yval);
 		} else {
-			return new Point(lpoint.getX(), lpoint.getY());
+			return new PVector(lpoint.x, lpoint.y);
 		}
 	}
 
@@ -136,7 +137,7 @@ public class Segment {
 		if (isVertical()) {
 			return 0;
 		}
-		return (rpoint.getY() - lpoint.getY()) / ((double) (rpoint.getX() - lpoint.getX()));
+		return (rpoint.y - lpoint.y) / ((double) (rpoint.x - lpoint.x));
 	}
 
 	/**
@@ -145,7 +146,7 @@ public class Segment {
 	 * @return True if the segment is vertical
 	 */
 	private boolean isVertical() {
-		return (rpoint.getX() == lpoint.getX());
+		return (rpoint.x == lpoint.x);
 	}
 
 	/**
@@ -158,7 +159,7 @@ public class Segment {
 	 */
 	public boolean crosses(Segment other) {
 		// check if x-ranges overlap
-		if ((other.lpoint.getX() > this.rpoint.getX()) || (other.rpoint.getX() < this.lpoint.getX())) {
+		if ((other.lpoint.x > this.rpoint.x) || (other.rpoint.x < this.lpoint.x)) {
 			return false;
 		}
 
@@ -169,8 +170,8 @@ public class Segment {
 			}
 			return true;
 		} else if (this.isVertical()) {
-			Point p = other.intersect(this.lpoint.getX());
-			return (p.getY() > this.getMinY()) && (p.getY() < this.getMaxY());
+			PVector p = other.intersect(this.lpoint.x);
+			return (p.y > this.getMinY()) && (p.y < this.getMaxY());
 		} else {// neither is a vertical line
 			// we use a bounding box technique instead of directly computing the
 			// intersection
@@ -180,13 +181,13 @@ public class Segment {
 			double slope1 = this.getSlope();
 			double slope2 = other.getSlope();
 			// use slope1 to calculate 3 b's, same for slope2
-			double b00 = this.lpoint.getY() - this.lpoint.getX() * slope1;
-			double b01 = other.lpoint.getY() - other.lpoint.getX() * slope1;
-			double b02 = other.rpoint.getY() - other.rpoint.getX() * slope1;
+			double b00 = this.lpoint.y - this.lpoint.x * slope1;
+			double b01 = other.lpoint.y - other.lpoint.x * slope1;
+			double b02 = other.rpoint.y - other.rpoint.x * slope1;
 
-			double b10 = other.lpoint.getY() - other.lpoint.getX() * slope2;
-			double b11 = this.lpoint.getY() - this.lpoint.getX() * slope2;
-			double b12 = this.rpoint.getY() - this.rpoint.getX() * slope2;
+			double b10 = other.lpoint.y - other.lpoint.x * slope2;
+			double b11 = this.lpoint.y - this.lpoint.x * slope2;
+			double b12 = this.rpoint.y - this.rpoint.x * slope2;
 			if (((b01 <= b00 && b00 <= b02) || (b01 >= b00 && b00 >= b02)) && ((b11 <= b10 && b10 <= b12) || b11 >= b10 && b10 >= b12)) {
 				return this.equals(other) || !(this.lpoint.equals(other.lpoint) || this.lpoint.equals(other.rpoint)
 						|| this.rpoint.equals(other.lpoint) || this.rpoint.equals(other.rpoint));
@@ -204,6 +205,16 @@ public class Segment {
 
 	@Override
 	public int hashCode() {
-		return lpoint.getX() ^ rpoint.getX() + lpoint.getY() ^ rpoint.getY();
+		return Float.floatToRawIntBits(lpoint.x + rpoint.x) ^ Float.floatToRawIntBits(lpoint.y + rpoint.y);
+	}
+
+	private static int compareTo(PVector a, PVector b) {
+		if (a.x < b.x || (a.x == b.x && a.y < b.y)) {
+			return -1;
+		} else if ((a.x == b.x) && (a.y == b.y)) {
+			return 0;
+		} else {
+			return 1;
+		}
 	}
 }

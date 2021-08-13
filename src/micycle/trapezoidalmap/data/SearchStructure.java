@@ -1,9 +1,12 @@
-package data;
+package micycle.trapezoidalmap.data;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Random;
+
+import processing.core.PVector;
 
 /**
  * This class represents the Trapezoidal Map for a given set of segments in the
@@ -38,14 +41,14 @@ public class SearchStructure {
 	 * @param ly   initial lower bound
 	 * @param ry   initial upper bound
 	 */
-	public SearchStructure(Segment[] segs, int lx, int rx, int ly, int ry) {
+	public SearchStructure(Segment[] segs, float lx, float rx, float ly, float ry) {
 		// construct the search structure and map? is the map even needed for anything?
 
 		// 1. determine a bounding box for the segments
-		int minx = lx;
-		int maxx = rx;
-		int miny = ly;
-		int maxy = ry;
+		float minx = lx;
+		float maxx = rx;
+		float miny = ly;
+		float maxy = ry;
 		for (Segment seg : segs) {
 			if (seg != null) {
 				minx = Math.min(minx, seg.getMinX());
@@ -55,10 +58,10 @@ public class SearchStructure {
 			}
 		}
 		// create a trapezoid using the bounding box
-		Point left = new Point(minx, miny);
-		Point right = new Point(maxx, maxy);
-		Trapezoid t = new Trapezoid(left, right, new Segment(new Point(minx, maxy), new Point(maxx, maxy)),
-				new Segment(new Point(minx, miny), new Point(maxx, miny)));
+		PVector left = new PVector(minx, miny);
+		PVector right = new PVector(maxx, maxy);
+		Trapezoid t = new Trapezoid(left, right, new Segment(new PVector(minx, maxy), new PVector(maxx, maxy)),
+				new Segment(new PVector(minx, miny), new PVector(maxx, miny)));
 		Leaf f = new Leaf(t);
 		t.setLeaf(f);
 		root = f;
@@ -133,7 +136,7 @@ public class SearchStructure {
 						root = ll;
 					} else {
 						// the previous node might have more than one parent node
-						ArrayList<Node> parents = list[0].getParentNodes();
+						List<Node> parents = list[0].getParentNodes();
 						for (Node tempParent : parents) {
 							if (tempParent.getLeftChildNode() == list[0]) {
 								tempParent.setLeftChildNode(ll);
@@ -165,7 +168,7 @@ public class SearchStructure {
 						root = rr;
 					} else {
 						// the previous node might have more than one parent node
-						ArrayList<Node> parents = list[0].getParentNodes();
+						List<Node> parents = list[0].getParentNodes();
 						for (Node tempParent : parents) {
 							if (tempParent.getLeftChildNode() == list[0]) {
 								tempParent.setLeftChildNode(rr);
@@ -195,7 +198,7 @@ public class SearchStructure {
 						root = ll;
 					} else {
 						// the previous node might have more than one parent node
-						ArrayList<Node> parents = list[0].getParentNodes();
+						List<Node> parents = list[0].getParentNodes();
 						for (Node tempParent : parents) {
 							if (tempParent.getLeftChildNode() == list[0]) {
 								tempParent.setLeftChildNode(ll);
@@ -225,7 +228,7 @@ public class SearchStructure {
 						root = ss;
 					} else {
 						// the previous node might have more than one parent node
-						ArrayList<Node> parents = list[0].getParentNodes();
+						List<Node> parents = list[0].getParentNodes();
 						for (Node tempParent : parents) {
 							if (tempParent.getLeftChildNode() == list[0]) {
 								tempParent.setLeftChildNode(ss);
@@ -247,42 +250,42 @@ public class SearchStructure {
 				// the first and last cases get broken into 3 parts
 				// the middle ones are different
 
-				// if the left segment endpoint is not leftp of list[0].getData(), then
+				// if the left segment endPVector is not leftp of list[0].getData(), then
 				// there is an extra trapezoid at the left end. Likewise for rightp of
 				// list[n-1].getData()
 
 				// for everything in the middle, we start with a single top and bottom trap for
 				// both
 				// then we merge trapezoids together as needed
-				// note that before merging, some trapezoids may have an endpoint which is null
+				// note that before merging, some trapezoids may have an endPVector which is null
 				Trapezoid[] topArr = new Trapezoid[list.length];
 				Trapezoid[] botArr = new Trapezoid[list.length];
 				for (int j = 0; j < list.length; j++) {
 					// top is defined by the original upper segment, the new segment & two endpoints
 					// left endpoint:
 					/*
-					 * if j==0, is segment's left endpoint else is old trap's left endpoint if it is
+					 * if j==0, is segment's left endPVector else is old trap's left endPVector if it is
 					 * above the segment
 					 */
-					// right endpoint is similar
+					// right endPVector is similar
 					if (j == 0) {
-						Point rtP = null;
+						PVector rtP = null;
 						if (isPointAboveLine(list[j].getData().getRightBound(), arr[i])) {
 							rtP = list[j].getData().getRightBound();
 						}
 						topArr[j] = new Trapezoid(arr[i].getLeftEndPoint(), rtP, list[j].getData().getUpperBound(), arr[i]);
 					} else if (j == list.length - 1) {
-						Point ltP = null;
+						PVector ltP = null;
 						if (isPointAboveLine(list[j].getData().getLeftBound(), arr[i])) {
 							ltP = list[j].getData().getLeftBound();
 						}
 						topArr[j] = new Trapezoid(ltP, arr[i].getRightEndPoint(), list[j].getData().getUpperBound(), arr[i]);
 					} else {
-						Point rtP = null;
+						PVector rtP = null;
 						if (isPointAboveLine(list[j].getData().getRightBound(), arr[i])) {
 							rtP = list[j].getData().getRightBound();
 						}
-						Point ltP = null;
+						PVector ltP = null;
 						if (isPointAboveLine(list[j].getData().getLeftBound(), arr[i])) {
 							ltP = list[j].getData().getLeftBound();
 						}
@@ -291,23 +294,23 @@ public class SearchStructure {
 
 					// the bottom array is constructed using a similar strategy
 					if (j == 0) {
-						Point rtP = null;
+						PVector rtP = null;
 						if (!isPointAboveLine(list[j].getData().getRightBound(), arr[i])) {
 							rtP = list[j].getData().getRightBound();
 						}
 						botArr[j] = new Trapezoid(arr[i].getLeftEndPoint(), rtP, arr[i], list[j].getData().getLowerBound());
 					} else if (j == list.length - 1) {
-						Point ltP = null;
+						PVector ltP = null;
 						if (!isPointAboveLine(list[j].getData().getLeftBound(), arr[i])) {
 							ltP = list[j].getData().getLeftBound();
 						}
 						botArr[j] = new Trapezoid(ltP, arr[i].getRightEndPoint(), arr[i], list[j].getData().getLowerBound());
 					} else {
-						Point rtP = null;
+						PVector rtP = null;
 						if (!isPointAboveLine(list[j].getData().getRightBound(), arr[i])) {
 							rtP = list[j].getData().getRightBound();
 						}
-						Point ltP = null;
+						PVector ltP = null;
 						if (!isPointAboveLine(list[j].getData().getLeftBound(), arr[i])) {
 							ltP = list[j].getData().getLeftBound();
 						}
@@ -527,7 +530,7 @@ public class SearchStructure {
 					// Node parent = list[j].getParentNode();
 
 					// now there may be many parents...
-					ArrayList<Node> parents = list[j].getParentNodes();
+					List<Node> parents = list[j].getParentNodes();
 					for (Node parent : parents) {
 						if (parent.getLeftChildNode() == list[j]) {
 							// replace left child
@@ -579,13 +582,12 @@ public class SearchStructure {
 	 * @return An array of trapezoids (Leaf array) intersected by the segment
 	 */
 	private Leaf[] followSegment(Segment s) {
-		// System.err.println("Follow segment not yet implemented");
 		ArrayList<Leaf> list = new ArrayList<>();
 		Leaf previous = findPoint(s.getLeftEndPoint(), s);
 		// shift over leftward to make sure we have the first of any repeated trapezoids
 
 		list.add(previous);
-		while (/* previous != null && */s.getRightEndPoint().compareTo(previous.getData().getRightBound()) > 0) {
+		while (compareTo(s.getRightEndPoint(), previous.getData().getRightBound()) > 0) {
 			// choose the next trapezoid in the sequence
 			if (SearchStructure.isPointAboveLine(previous.getData().getRightBound(), s)) {
 				previous = previous.getData().getLowerRightNeighbor().getLeaf();
@@ -605,15 +607,15 @@ public class SearchStructure {
 	/**
 	 * Find the trapezoid in the trapezoidal map which contains the search point.
 	 *
-	 * @param p The point to search for
+	 * @param p The PVector to search for
 	 * @return The trapezoid containing the query point
 	 */
-	public Leaf findPoint(Point p, Segment s) {
+	public Leaf findPoint(PVector p, Segment s) {
 		Node current = root;
-		while (!(current instanceof data.Leaf)) {
-			if (current instanceof data.XNode) {
-				int val = p.compareTo(((XNode) current).getData());
-
+		while (!(current instanceof micycle.trapezoidalmap.data.Leaf)) {
+			if (current instanceof micycle.trapezoidalmap.data.XNode) {
+				int val = compareTo(p, ((XNode) current).getData());
+				
 				if (val < 0) {
 					current = current.getLeftChildNode();
 				} else {
@@ -627,7 +629,7 @@ public class SearchStructure {
 					current = current.getRightChildNode();
 				}
 			} else {
-				// we are searching for a point on one of the segments
+				// we are searching for a PVector on one of the segments
 				if (isPointAboveLine2(p, ((YNode) current).getData(), s)) {
 					current = current.getLeftChildNode();
 				} else {
@@ -644,62 +646,72 @@ public class SearchStructure {
 	 * Leverages the findPont method which finds a leaf, and returns the
 	 * corresponding trapezoid.
 	 * 
-	 * @param p The point to query
+	 * @param p The PVector to query
 	 * @return The trapezoid containing the point
 	 */
-	public Trapezoid findPointTrap(Point p) {
+	public Trapezoid findPointTrap(PVector p) {
 		return findPoint(p, null).getData();
 	}
 
 	/**
-	 * Checks to see if a point is above the segment. Works by calculating y of the
+	 * Checks to see if a PVector is above the segment. Works by calculating y of the
 	 * segment at x of the point
 	 *
-	 * @param p The point of interest
+	 * @param p The PVector of interest
 	 * @param s The segment of interest
 	 * @return True if on or above the segment; false otherwise
 	 */
-	public static boolean isPointAboveLine(Point p, Segment s) {
-		int x = p.getX();
-		int y = p.getY();
-		return (x - s.getLeftEndPoint().getX()) * s.getRightEndPoint().getY() + (s.getRightEndPoint().getX() - x)
-				* s.getLeftEndPoint().getY() < y * (s.getRightEndPoint().getX() - s.getLeftEndPoint().getX());
+	public static boolean isPointAboveLine(PVector p, Segment s) {
+		float x = p.x;
+		float y = p.y;
+		return (x - s.getLeftEndPoint().x) * s.getRightEndPoint().y + (s.getRightEndPoint().x - x)
+				* s.getLeftEndPoint().y < y * (s.getRightEndPoint().x - s.getLeftEndPoint().x);
 	}
 
 	/**
-	 * Checks if the input point on the given old segment lies above or below the
-	 * new segment. If the input point lies on the new segment, we determine
+	 * Checks if the input PVector on the given old segment lies above or below the
+	 * new segment. If the input PVector lies on the new segment, we determine
 	 * above/below by which segment has the higher slope.
 	 * 
 	 * @TODO Check this for nondegenerate case?
-	 * @param p    The point under consideration
-	 * @param old  The segment which the point lies on
-	 * @param pseg The segment to compare the point to
-	 * @return True if the point lies above segment pseg, or the point lies on pseg,
+	 * @param p    The PVector under consideration
+	 * @param old  The segment which the PVector lies on
+	 * @param pseg The segment to compare the PVector to
+	 * @return True if the PVector lies above segment pseg, or the PVector lies on pseg,
 	 *         on a segment of higher slope
 	 */
-	public static boolean isPointAboveLine2(Point p, Segment old, Segment pseg) {
+	public static boolean isPointAboveLine2(PVector p, Segment old, Segment pseg) {
 		// check if p is on segment old
 		/*
-		 * long x1 = p.getX(); long x2 = old.getLeftEndPoint().getX(); long x3 =
-		 * old.getRightEndPoint().getX(); long y1 = p.getY(); long y2 =
-		 * old.getLeftEndPoint().getY(); long y3 = old.getRightEndPoint().getY(); long
+		 * long x1 = p.x; long x2 = old.getLeftEndPoint().x; long x3 =
+		 * old.getRightEndPoint().x; long y1 = p.y; long y2 =
+		 * old.getLeftEndPoint().y; long y3 = old.getRightEndPoint().y; long
 		 * result = (x2-x1)*(y3-y1) - (x3-x1)*(y2-y1);
 		 */
 		// according to the textbook, p can only lie on segment old if it is the left
 		// endpoint
 		if (p.equals(old.getLeftEndPoint())) {
 			// compare slopes
-			long x1 = p.getX();
-			long x2 = old.getRightEndPoint().getX();
-			long x3 = pseg.getRightEndPoint().getX();
-			long y1 = p.getY();
-			long y2 = old.getRightEndPoint().getY();
-			long y3 = pseg.getRightEndPoint().getY();
-			long result = (x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1);
+			float x1 = p.x;
+			float x2 = old.getRightEndPoint().x;
+			float x3 = pseg.getRightEndPoint().x;
+			float y1 = p.y;
+			float y2 = old.getRightEndPoint().y;
+			float y3 = pseg.getRightEndPoint().y;
+			float result = (x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1);
 			return result > 0;
 		}
 		// if not, call isPointAboveLine
 		return isPointAboveLine(p, old);
+	}
+	
+	private static int compareTo(PVector a, PVector b) {
+		if (a.x < b.x || (a.x == b.x && a.y < b.y)) {
+			return -1;
+		} else if ((a.x == b.x) && (a.y == b.y)) {
+			return 0;
+		} else {
+			return 1;
+		}
 	}
 }
