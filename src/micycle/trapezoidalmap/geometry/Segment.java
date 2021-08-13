@@ -1,6 +1,4 @@
-package micycle.trapezoidalmap.data;
-
-import java.awt.geom.Line2D;
+package micycle.trapezoidalmap.geometry;
 
 import processing.core.PVector;
 
@@ -12,24 +10,23 @@ import processing.core.PVector;
  */
 public class Segment {
 
-	public PVector lpoint;
-	public PVector rpoint;
-	private Line2D.Double l;// for display purposes
+	private PVector lPoint;
+	private PVector rPoint;
 
 	public Segment(PVector one, PVector two) {
 		// we store the left, lower point as lpoint
 		// the other point is stored as rpoint
-		if (one.x == two.x) {
-			System.err.println("same X");
-		}
 		if (compareTo(one, two) <= 0) {
-			lpoint = one;
-			rpoint = two;
+			lPoint = one;
+			rPoint = two;
 		} else {
-			lpoint = two;
-			rpoint = one;
+			lPoint = two;
+			rPoint = one;
 		}
-		l = new Line2D.Double(lpoint.x, lpoint.y, rpoint.x, rpoint.y);
+	}
+
+	public Segment(float p1X, float p1Y, float p2X, float p2Y) {
+		this(new PVector(p1X, p1Y), new PVector(p2X, p2Y));
 	}
 
 	/**
@@ -38,8 +35,8 @@ public class Segment {
 	 *
 	 * @return The left segment endpoint
 	 */
-	public PVector getLeftEndPoint() {
-		return lpoint;
+	public PVector getLeftPoint() {
+		return lPoint;
 	}
 
 	/**
@@ -48,8 +45,8 @@ public class Segment {
 	 *
 	 * @return The right segment endpoint
 	 */
-	public PVector getRightEndPoint() {
-		return rpoint;
+	public PVector getRightPoint() {
+		return rPoint;
 	}
 
 	/**
@@ -59,7 +56,7 @@ public class Segment {
 	 * @return The minimum x value
 	 */
 	public float getMinX() {
-		return lpoint.x;
+		return lPoint.x;
 	}
 
 	/**
@@ -68,7 +65,7 @@ public class Segment {
 	 * @return The maximum x value
 	 */
 	public float getMaxX() {
-		return rpoint.x;
+		return rPoint.x;
 	}
 
 	/**
@@ -77,7 +74,7 @@ public class Segment {
 	 * @return The minimum y value
 	 */
 	public float getMinY() {
-		return Math.min(lpoint.y, rpoint.y);
+		return Math.min(lPoint.y, rPoint.y);
 	}
 
 	/**
@@ -86,17 +83,7 @@ public class Segment {
 	 * @return The maximum y value
 	 */
 	public float getMaxY() {
-		return Math.max(lpoint.y, rpoint.y);
-	}
-
-	/**
-	 * Get the geometric object corresponding to the line segment. Doing this allows
-	 * for easy display (built in!)
-	 *
-	 * @return The Line2D object representing this segment
-	 */
-	public Line2D.Double getline() {
-		return l;
+		return Math.max(lPoint.y, rPoint.y);
 	}
 
 	@Override
@@ -105,7 +92,7 @@ public class Segment {
 			return false;
 		}
 		Segment ss = (Segment) s;
-		return ss.lpoint.equals(this.lpoint) && ss.rpoint.equals(this.rpoint);
+		return ss.lPoint.equals(this.lPoint) && ss.rPoint.equals(this.rPoint);
 	}
 
 	/**
@@ -117,13 +104,12 @@ public class Segment {
 	 * @return The point on the line (segment) at the given x-value
 	 */
 	public PVector intersect(float x) {
-		if (lpoint.x != rpoint.x) {
-
-			float ysum = ((x - lpoint.x)) * (rpoint.y) + ((rpoint.x - x)) * (lpoint.y);
-			float yval = ysum / (rpoint.x - lpoint.x);
+		if (lPoint.x != rPoint.x) {
+			float ysum = ((x - lPoint.x)) * (rPoint.y) + ((rPoint.x - x)) * (lPoint.y);
+			float yval = ysum / (rPoint.x - lPoint.x);
 			return new PVector(x, yval);
 		} else {
-			return new PVector(lpoint.x, lpoint.y);
+			return new PVector(lPoint.x, lPoint.y);
 		}
 	}
 
@@ -137,7 +123,7 @@ public class Segment {
 		if (isVertical()) {
 			return 0;
 		}
-		return (rpoint.y - lpoint.y) / ((double) (rpoint.x - lpoint.x));
+		return (rPoint.y - lPoint.y) / (rPoint.x - lPoint.x);
 	}
 
 	/**
@@ -146,7 +132,7 @@ public class Segment {
 	 * @return True if the segment is vertical
 	 */
 	private boolean isVertical() {
-		return (rpoint.x == lpoint.x);
+		return (rPoint.x == lPoint.x);
 	}
 
 	/**
@@ -159,7 +145,7 @@ public class Segment {
 	 */
 	public boolean crosses(Segment other) {
 		// check if x-ranges overlap
-		if ((other.lpoint.x > this.rpoint.x) || (other.rpoint.x < this.lpoint.x)) {
+		if ((other.lPoint.x > this.rPoint.x) || (other.rPoint.x < this.lPoint.x)) {
 			return false;
 		}
 
@@ -170,7 +156,7 @@ public class Segment {
 			}
 			return true;
 		} else if (this.isVertical()) {
-			PVector p = other.intersect(this.lpoint.x);
+			PVector p = other.intersect(this.lPoint.x);
 			return (p.y > this.getMinY()) && (p.y < this.getMaxY());
 		} else {// neither is a vertical line
 			// we use a bounding box technique instead of directly computing the
@@ -181,31 +167,30 @@ public class Segment {
 			double slope1 = this.getSlope();
 			double slope2 = other.getSlope();
 			// use slope1 to calculate 3 b's, same for slope2
-			double b00 = this.lpoint.y - this.lpoint.x * slope1;
-			double b01 = other.lpoint.y - other.lpoint.x * slope1;
-			double b02 = other.rpoint.y - other.rpoint.x * slope1;
+			double b00 = this.lPoint.y - this.lPoint.x * slope1;
+			double b01 = other.lPoint.y - other.lPoint.x * slope1;
+			double b02 = other.rPoint.y - other.rPoint.x * slope1;
 
-			double b10 = other.lpoint.y - other.lpoint.x * slope2;
-			double b11 = this.lpoint.y - this.lpoint.x * slope2;
-			double b12 = this.rpoint.y - this.rpoint.x * slope2;
+			double b10 = other.lPoint.y - other.lPoint.x * slope2;
+			double b11 = this.lPoint.y - this.lPoint.x * slope2;
+			double b12 = this.rPoint.y - this.rPoint.x * slope2;
 			if (((b01 <= b00 && b00 <= b02) || (b01 >= b00 && b00 >= b02)) && ((b11 <= b10 && b10 <= b12) || b11 >= b10 && b10 >= b12)) {
-				return this.equals(other) || !(this.lpoint.equals(other.lpoint) || this.lpoint.equals(other.rpoint)
-						|| this.rpoint.equals(other.lpoint) || this.rpoint.equals(other.rpoint));
+				return this.equals(other) || !(this.lPoint.equals(other.lPoint) || this.lPoint.equals(other.rPoint)
+						|| this.rPoint.equals(other.lPoint) || this.rPoint.equals(other.rPoint));
 
 			}
 		}
-
 		return false;
 	}
 
 	@Override
 	public String toString() {
-		return lpoint + "     " + rpoint;
+		return lPoint + "     " + rPoint;
 	}
 
 	@Override
 	public int hashCode() {
-		return Float.floatToRawIntBits(lpoint.x + rpoint.x) ^ Float.floatToRawIntBits(lpoint.y + rpoint.y);
+		return Float.floatToIntBits(lPoint.x + rPoint.x) ^ Float.floatToIntBits(lPoint.y + rPoint.y);
 	}
 
 	private static int compareTo(PVector a, PVector b) {

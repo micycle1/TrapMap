@@ -1,4 +1,6 @@
-package micycle.trapezoidalmap.data;
+package micycle.trapezoidalmap.tree;
+
+import micycle.trapezoidalmap.geometry.Segment;
 
 /**
  * A y-node stores a segment

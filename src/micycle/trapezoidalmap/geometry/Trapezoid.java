@@ -1,14 +1,13 @@
-package micycle.trapezoidalmap.data;
+package micycle.trapezoidalmap.geometry;
 
 import java.awt.Polygon;
 
+import micycle.trapezoidalmap.tree.Leaf;
 import processing.core.PVector;
 
 /**
  * Represents a trapezoid object in the trapezoidal map or search structure.
- *
- * Trapezoid is now a proud independent node.
- *
+ * 
  * @author Tyler Chenhall
  */
 public final class Trapezoid {
@@ -47,9 +46,6 @@ public final class Trapezoid {
 		uright_neighbor = null;
 		lright_neighbor = null;
 		owner = null;
-		if (left != null && right != null) {// if one of the points is null, this is only a temporary trapezoid
-			poly = this.getPrivateBoundaryPolygon(left, right, top, bottom);
-		}
 	}
 
 	/**
@@ -183,6 +179,9 @@ public final class Trapezoid {
 	 * @return The boundary Polygon
 	 */
 	public Polygon getBoundaryPolygon() {
+		if (poly == null) {
+			poly = this.getPrivateBoundaryPolygon(leftP, rightP, topSeg, botSeg);
+		}
 		return poly;
 	}
 

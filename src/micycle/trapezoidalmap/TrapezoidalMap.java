@@ -1,4 +1,4 @@
-package micycle.trapezoidalmap.data;
+package micycle.trapezoidalmap;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -6,6 +6,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import micycle.trapezoidalmap.geometry.Segment;
+import micycle.trapezoidalmap.geometry.Trapezoid;
+import micycle.trapezoidalmap.tree.Leaf;
+import micycle.trapezoidalmap.tree.Node;
+import micycle.trapezoidalmap.tree.XNode;
+import micycle.trapezoidalmap.tree.YNode;
 import processing.core.PVector;
 
 /**
@@ -68,21 +74,21 @@ public class TrapezoidalMap {
 //		}
 
 		// 3. incrementally make the trapezoidal map
-		for (int i = 0; i < segs.length; i++) {
+		for (Segment seg : segs) {
 			// find the trapezoids intersected by arr[i]
-			Leaf[] list = followSegment(segs[i]);
+			Leaf[] list = followSegment(seg);
 
 			if (list.length == 1) {// the segment is entirely within a single trapezoid
 
 				// split into 4 sections
 				Trapezoid old = list[0].getData();
-				Trapezoid lefty = new Trapezoid(old.getLeftBound(), segs[i].getLeftEndPoint(), old.getUpperBound(), old.getLowerBound());
-				Trapezoid righty = new Trapezoid(segs[i].getRightEndPoint(), old.getRightBound(), old.getUpperBound(), old.getLowerBound());
-				Trapezoid top = new Trapezoid(segs[i].getLeftEndPoint(), segs[i].getRightEndPoint(), old.getUpperBound(), segs[i]);
-				Trapezoid bottom = new Trapezoid(segs[i].getLeftEndPoint(), segs[i].getRightEndPoint(), segs[i], old.getLowerBound());
-				XNode ll = new XNode(segs[i].getLeftEndPoint());
-				XNode rr = new XNode(segs[i].getRightEndPoint());
-				YNode ss = new YNode(segs[i]);
+				Trapezoid lefty = new Trapezoid(old.getLeftBound(), seg.getLeftPoint(), old.getUpperBound(), old.getLowerBound());
+				Trapezoid righty = new Trapezoid(seg.getRightPoint(), old.getRightBound(), old.getUpperBound(), old.getLowerBound());
+				Trapezoid top = new Trapezoid(seg.getLeftPoint(), seg.getRightPoint(), old.getUpperBound(), seg);
+				Trapezoid bottom = new Trapezoid(seg.getLeftPoint(), seg.getRightPoint(), seg, old.getLowerBound());
+				XNode ll = new XNode(seg.getLeftPoint());
+				XNode rr = new XNode(seg.getRightPoint());
+				YNode ss = new YNode(seg);
 
 				Leaf leftyN = new Leaf(lefty);
 				lefty.setLeaf(leftyN);
@@ -216,19 +222,15 @@ public class TrapezoidalMap {
 					upperLink(top, old.getUpperRightNeighbor());
 				}
 
-			} else {// (3 divisions for the first and last trapezoids, 2 for the middle ones)
-				// the first and last cases get broken into 3 parts
-				// the middle ones are different
-
-				// if the left segment endPVector is not leftp of list[0].getData(), then
-				// there is an extra trapezoid at the left end. Likewise for rightp of
-				// list[n-1].getData()
-
-				// for everything in the middle, we start with a single top and bottom trap for
-				// both
-				// then we merge trapezoids together as needed
-				// note that before merging, some trapezoids may have an endPVector which is
-				// null
+			} else { // (3 divisions for the first and last trapezoids, 2 for the middle ones)
+				/*
+				 * The first and last cases get broken into 3 parts wheras the middle ones are
+				 * different. If the left segment endPVector is not leftP of list[0].getData(),
+				 * then there is an extra trapezoid at the left end; likewise for rightP of
+				 * list[n-1].getData(). For everything in the middle, we start with a single top
+				 * and bottom trap for both then we merge trapezoids together as needed note
+				 * that before merging, some trapezoids may have an end PVector which is null.
+				 */
 				Trapezoid[] topArr = new Trapezoid[list.length];
 				Trapezoid[] botArr = new Trapezoid[list.length];
 				for (int j = 0; j < list.length; j++) {
@@ -241,51 +243,51 @@ public class TrapezoidalMap {
 					// right endPVector is similar
 					if (j == 0) {
 						PVector rtP = null;
-						if (isPointAboveLine(list[j].getData().getRightBound(), segs[i])) {
+						if (isPointAboveLine(list[j].getData().getRightBound(), seg)) {
 							rtP = list[j].getData().getRightBound();
 						}
-						topArr[j] = new Trapezoid(segs[i].getLeftEndPoint(), rtP, list[j].getData().getUpperBound(), segs[i]);
+						topArr[j] = new Trapezoid(seg.getLeftPoint(), rtP, list[j].getData().getUpperBound(), seg);
 					} else if (j == list.length - 1) {
 						PVector ltP = null;
-						if (isPointAboveLine(list[j].getData().getLeftBound(), segs[i])) {
+						if (isPointAboveLine(list[j].getData().getLeftBound(), seg)) {
 							ltP = list[j].getData().getLeftBound();
 						}
-						topArr[j] = new Trapezoid(ltP, segs[i].getRightEndPoint(), list[j].getData().getUpperBound(), segs[i]);
+						topArr[j] = new Trapezoid(ltP, seg.getRightPoint(), list[j].getData().getUpperBound(), seg);
 					} else {
 						PVector rtP = null;
-						if (isPointAboveLine(list[j].getData().getRightBound(), segs[i])) {
+						if (isPointAboveLine(list[j].getData().getRightBound(), seg)) {
 							rtP = list[j].getData().getRightBound();
 						}
 						PVector ltP = null;
-						if (isPointAboveLine(list[j].getData().getLeftBound(), segs[i])) {
+						if (isPointAboveLine(list[j].getData().getLeftBound(), seg)) {
 							ltP = list[j].getData().getLeftBound();
 						}
-						topArr[j] = new Trapezoid(ltP, rtP, list[j].getData().getUpperBound(), segs[i]);
+						topArr[j] = new Trapezoid(ltP, rtP, list[j].getData().getUpperBound(), seg);
 					}
 
 					// the bottom array is constructed using a similar strategy
 					if (j == 0) {
 						PVector rtP = null;
-						if (!isPointAboveLine(list[j].getData().getRightBound(), segs[i])) {
+						if (!isPointAboveLine(list[j].getData().getRightBound(), seg)) {
 							rtP = list[j].getData().getRightBound();
 						}
-						botArr[j] = new Trapezoid(segs[i].getLeftEndPoint(), rtP, segs[i], list[j].getData().getLowerBound());
+						botArr[j] = new Trapezoid(seg.getLeftPoint(), rtP, seg, list[j].getData().getLowerBound());
 					} else if (j == list.length - 1) {
 						PVector ltP = null;
-						if (!isPointAboveLine(list[j].getData().getLeftBound(), segs[i])) {
+						if (!isPointAboveLine(list[j].getData().getLeftBound(), seg)) {
 							ltP = list[j].getData().getLeftBound();
 						}
-						botArr[j] = new Trapezoid(ltP, segs[i].getRightEndPoint(), segs[i], list[j].getData().getLowerBound());
+						botArr[j] = new Trapezoid(ltP, seg.getRightPoint(), seg, list[j].getData().getLowerBound());
 					} else {
 						PVector rtP = null;
-						if (!isPointAboveLine(list[j].getData().getRightBound(), segs[i])) {
+						if (!isPointAboveLine(list[j].getData().getRightBound(), seg)) {
 							rtP = list[j].getData().getRightBound();
 						}
 						PVector ltP = null;
-						if (!isPointAboveLine(list[j].getData().getLeftBound(), segs[i])) {
+						if (!isPointAboveLine(list[j].getData().getLeftBound(), seg)) {
 							ltP = list[j].getData().getLeftBound();
 						}
-						botArr[j] = new Trapezoid(ltP, rtP, segs[i], list[j].getData().getLowerBound());
+						botArr[j] = new Trapezoid(ltP, rtP, seg, list[j].getData().getLowerBound());
 					}
 				}
 
@@ -301,7 +303,7 @@ public class TrapezoidalMap {
 						// we only want one trapezoid, so we just have bTop-aTop+1 pointers to it for
 						// now
 						Trapezoid tempMerge = new Trapezoid(topArr[aTop].getLeftBound(), topArr[bTop].getRightBound(),
-								topArr[aTop].getUpperBound(), segs[i]);
+								topArr[aTop].getUpperBound(), seg);
 						for (int k = aTop; k <= bTop; k++) {
 							// now there are duplicates of the same trapezoid unfortunately, but I think if
 							// we link them together left to right
@@ -314,7 +316,7 @@ public class TrapezoidalMap {
 					if (botArr[j].getRightBound() != null) {
 						bBot = j;
 						// merge trapezoids aBot through bBot
-						Trapezoid tempMerge = new Trapezoid(botArr[aBot].getLeftBound(), botArr[bBot].getRightBound(), segs[i],
+						Trapezoid tempMerge = new Trapezoid(botArr[aBot].getLeftBound(), botArr[bBot].getRightBound(), seg,
 								botArr[aBot].getLowerBound());
 						for (int k = aBot; k <= bBot; k++) {
 							botArr[k] = tempMerge;
@@ -387,14 +389,13 @@ public class TrapezoidalMap {
 				Trapezoid rightmost = null;
 				Trapezoid oldLeft = list[0].getData();
 				Trapezoid oldRight = list[list.length - 1].getData();
-				if (!segs[i].getLeftEndPoint().equals(oldLeft.getLeftBound())) {
+				if (!seg.getLeftPoint().equals(oldLeft.getLeftBound())) {
 					// there is a leftmost trapezoid
-					leftmost = new Trapezoid(oldLeft.getLeftBound(), segs[i].getLeftEndPoint(), oldLeft.getUpperBound(),
-							oldLeft.getLowerBound());
+					leftmost = new Trapezoid(oldLeft.getLeftBound(), seg.getLeftPoint(), oldLeft.getUpperBound(), oldLeft.getLowerBound());
 				}
-				if (!segs[i].getRightEndPoint().equals(list[list.length - 1].getData().getRightBound())) {
+				if (!seg.getRightPoint().equals(list[list.length - 1].getData().getRightBound())) {
 					// there is a rightmost trapezoid
-					rightmost = new Trapezoid(segs[i].getRightEndPoint(), oldRight.getRightBound(), oldRight.getUpperBound(),
+					rightmost = new Trapezoid(seg.getRightPoint(), oldRight.getRightBound(), oldRight.getUpperBound(),
 							oldRight.getLowerBound());
 				}
 
@@ -406,12 +407,12 @@ public class TrapezoidalMap {
 					lowerLink(leftmost, botArr[0]);
 					upperLink(leftmost, topArr[0]);
 				} else // link top & bot arr with appropriate left links of oldLeft
-				if (oldLeft.getUpperBound().getLeftEndPoint().equals(oldLeft.getLowerBound().getLeftEndPoint())) {
+				if (oldLeft.getUpperBound().getLeftPoint().equals(oldLeft.getLowerBound().getLeftPoint())) {
 					// triangles, so no neighbors to worry about
-				} else if (oldLeft.getUpperBound().getLeftEndPoint().equals(oldLeft.getLeftBound())) {
+				} else if (oldLeft.getUpperBound().getLeftPoint().equals(oldLeft.getLeftBound())) {
 					// upper half degenerates to a triangle
 					lowerLink(oldLeft.getLowerLeftNeighbor(), botArr[0]);
-				} else if (oldLeft.getLowerBound().getLeftEndPoint().equals(oldLeft.getLeftBound())) {
+				} else if (oldLeft.getLowerBound().getLeftPoint().equals(oldLeft.getLeftBound())) {
 					// lower half degenerates to a triangle
 					upperLink(oldLeft.getUpperLeftNeighbor(), topArr[0]);
 				} else {
@@ -426,12 +427,12 @@ public class TrapezoidalMap {
 					lowerLink(botArr[botArr.length - 1], rightmost);
 					upperLink(topArr[topArr.length - 1], rightmost);
 				} else // link the top & bot arr with the appropriate right links of oldRight
-				if (oldRight.getUpperBound().getRightEndPoint().equals(oldRight.getLowerBound().getRightEndPoint())) {
+				if (oldRight.getUpperBound().getRightPoint().equals(oldRight.getLowerBound().getRightPoint())) {
 					// triangles, hence no right neighbors
-				} else if (oldRight.getUpperBound().getRightEndPoint().equals(oldRight.getRightBound())) {
+				} else if (oldRight.getUpperBound().getRightPoint().equals(oldRight.getRightBound())) {
 					// upper half degenerates to a triangle
 					lowerLink(botArr[botArr.length - 1], oldRight.getLowerRightNeighbor());
-				} else if (oldRight.getLowerBound().getRightEndPoint().equals(oldRight.getRightBound())) {
+				} else if (oldRight.getLowerBound().getRightPoint().equals(oldRight.getRightBound())) {
 					// lower half degenerates to a triangle
 					upperLink(topArr[topArr.length - 1], oldRight.getUpperRightNeighbor());
 				} else {
@@ -470,9 +471,9 @@ public class TrapezoidalMap {
 				// from the physical structure
 				Node[] newStructures = new Node[list.length];
 				for (int j = 0; j < list.length; j++) {
-					Node yy = new YNode(segs[i]);
+					Node yy = new YNode(seg);
 					if (j == 0 && leftmost != null) {
-						XNode xx = new XNode(segs[i].getLeftEndPoint());
+						XNode xx = new XNode(seg.getLeftPoint());
 						aa = new Leaf(leftmost);
 						leftmost.setLeaf(aa);
 						xx.setLeftChildNode(aa);
@@ -480,7 +481,7 @@ public class TrapezoidalMap {
 
 						newStructures[j] = xx;
 					} else if (j == newStructures.length - 1 && rightmost != null) {
-						XNode xx = new XNode(segs[i].getRightEndPoint());
+						XNode xx = new XNode(seg.getRightPoint());
 						aa = new Leaf(rightmost);
 						rightmost.setLeaf(aa);
 						xx.setRightChildNode(aa);
@@ -576,11 +577,11 @@ public class TrapezoidalMap {
 	 */
 	private Leaf[] followSegment(Segment s) {
 		List<Leaf> list = new ArrayList<>();
-		Leaf previous = findPoint(s.getLeftEndPoint(), s);
+		Leaf previous = findPoint(s.getLeftPoint(), s);
 		// shift over leftward to make sure we have the first of any repeated trapezoids
 
 		list.add(previous);
-		while (compareTo(s.getRightEndPoint(), previous.getData().getRightBound()) > 0) {
+		while (compareTo(s.getRightPoint(), previous.getData().getRightBound()) > 0) {
 			// choose the next trapezoid in the sequence
 			if (TrapezoidalMap.isPointAboveLine(previous.getData().getRightBound(), s)) {
 				previous = previous.getData().getLowerRightNeighbor().getLeaf();
@@ -683,8 +684,8 @@ public class TrapezoidalMap {
 	private static boolean isPointAboveLine(PVector p, Segment s) {
 		float x = p.x;
 		float y = p.y;
-		return (x - s.getLeftEndPoint().x) * s.getRightEndPoint().y + (s.getRightEndPoint().x - x) * s.getLeftEndPoint().y < y
-				* (s.getRightEndPoint().x - s.getLeftEndPoint().x);
+		return (x - s.getLeftPoint().x) * s.getRightPoint().y + (s.getRightPoint().x - x) * s.getLeftPoint().y < y
+				* (s.getRightPoint().x - s.getLeftPoint().x);
 	}
 
 	/**
@@ -709,14 +710,14 @@ public class TrapezoidalMap {
 		 */
 		// according to the textbook, p can only lie on segment old if it is the left
 		// endpoint
-		if (p.equals(old.getLeftEndPoint())) {
+		if (p.equals(old.getLeftPoint())) {
 			// compare slopes
 			float x1 = p.x;
-			float x2 = old.getRightEndPoint().x;
-			float x3 = pseg.getRightEndPoint().x;
+			float x2 = old.getRightPoint().x;
+			float x3 = pseg.getRightPoint().x;
 			float y1 = p.y;
-			float y2 = old.getRightEndPoint().y;
-			float y3 = pseg.getRightEndPoint().y;
+			float y2 = old.getRightPoint().y;
+			float y3 = pseg.getRightPoint().y;
 			float result = (x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1);
 			return result > 0;
 		}
