@@ -28,7 +28,15 @@ public final class Trapezoid {
 	private PVector rightP;
 	private Segment topSeg;
 	private Segment botSeg;
-	private PShape poly;
+	private PShape poly; // polygonal representation of trapezoid
+
+	/**
+	 * Boolean flag that indicates whether the mapping to the polygonal face this
+	 * trapezium belongs to has been computed.
+	 */
+	boolean computedFace = false;
+	private PShape face = null; // actual face (computed lazily), depending on neighbours, (and whether TrapMap
+	// was created using shapes)
 
 	/**
 	 * Constructs a trapezoid object based on the x boundaries and bounding
@@ -148,6 +156,51 @@ public final class Trapezoid {
 	 */
 	public Leaf getLeaf() {
 		return owner;
+	}
+
+	/**
+	 * Gets the mapped polygonal face that this trapezium is a part of.
+	 * 
+	 * @return Null if trapezoid lies outside polygons, or no polygons were set up.
+	 */
+	public PShape getFace() {
+		if (!computedFace) {
+			final PShape f1 = topSeg.faceA;
+			final PShape f2 = topSeg.faceB;
+			final PShape f3 = botSeg.faceA;
+			final PShape f4 = botSeg.faceB;
+
+			/*
+			 * If the trapezium is mapped to a face, then the polygonal face in which the
+			 * trapezium lies can be computed by first retrieving the enclosing segments,
+			 * and then finding the face that is shared by two of these segments (this is
+			 * the face that is properly enclosed by the trapezium's top and bottom
+			 * segments).
+			 */
+			if (f1 != null) {
+				if (f1 == f2 || f1 == f3 || f1 == f4) {
+					face = f1;
+					computedFace = true;
+					return face;
+				}
+			}
+			if (f2 != null) {
+				if (f2 == f3 || f2 == f4) {
+					face = f2;
+					computedFace = true;
+					return face;
+				}
+			}
+			if (f3 != null) {
+				if (f3 == f4) {
+					face = f3;
+					computedFace = true;
+					return face;
+				}
+			}
+		}
+
+		return face;
 	}
 
 	/**

@@ -1,5 +1,6 @@
 package micycle.trapmap.geometry;
 
+import processing.core.PShape;
 import processing.core.PVector;
 
 /**
@@ -12,6 +13,9 @@ public class Segment {
 
 	private PVector lPoint;
 	private PVector rPoint;
+	
+	public PShape faceA; // segment will always have one face
+	public PShape faceB; // possible (such as mesh)
 
 	public Segment(PVector one, PVector two) {
 		// we store the left, lower point as lpoint
@@ -23,6 +27,19 @@ public class Segment {
 			lPoint = two;
 			rPoint = one;
 		}
+	}
+	
+	public Segment(PVector one, PVector two, PShape face) {
+		// we store the left, lower point as lpoint
+		// the other point is stored as rpoint
+		if (compareTo(one, two) <= 0) {
+			lPoint = one;
+			rPoint = two;
+		} else {
+			lPoint = two;
+			rPoint = one;
+		}
+		faceA = face;
 	}
 
 	public Segment(float p1X, float p1Y, float p2X, float p2Y) {
@@ -85,14 +102,9 @@ public class Segment {
 	public float getMaxY() {
 		return Math.max(lPoint.y, rPoint.y);
 	}
-
-	@Override
-	public boolean equals(Object s) {
-		if (!(s instanceof Segment) || s == null) {
-			return false;
-		}
-		Segment ss = (Segment) s;
-		return ss.lPoint.equals(this.lPoint) && ss.rPoint.equals(this.rPoint);
+	
+	public void setFaceB(PShape face) {
+		faceB = face;
 	}
 
 	/**
@@ -181,6 +193,15 @@ public class Segment {
 			}
 		}
 		return false;
+	}
+
+	@Override
+	public boolean equals(Object s) {
+		if (!(s instanceof Segment) || s == null) {
+			return false;
+		}
+		Segment ss = (Segment) s;
+		return ss.lPoint.equals(this.lPoint) && ss.rPoint.equals(this.rPoint);
 	}
 
 	@Override

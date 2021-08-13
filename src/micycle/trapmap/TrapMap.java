@@ -2,8 +2,10 @@ package micycle.trapmap;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import micycle.trapmap.geometry.Segment;
@@ -12,6 +14,7 @@ import micycle.trapmap.tree.Leaf;
 import micycle.trapmap.tree.Node;
 import micycle.trapmap.tree.XNode;
 import micycle.trapmap.tree.YNode;
+import processing.core.PShape;
 import processing.core.PVector;
 
 /**
@@ -25,32 +28,68 @@ import processing.core.PVector;
  * @author Tyler Chenhall (core algorithm)
  * @author Michael Carleton (improvements + Processing integration)
  */
-public class TrapezoidalMap {
-	
+public class TrapMap {
+
 	// TODO HANDLE POINT INPUT FOR NEAREST NEIGHBOUR
 
-	private Node root; // root for rooted tree (DAG)
+	private Node root; // root of tree (DAG)
 
-	public TrapezoidalMap(Collection<Segment> segs, float lx, float rx, float ly, float ry) {
-		this(segs.toArray(new Segment[segs.size()]));
+	/**
+	 * 
+	 * @param polygons a list of disjoint polygonal shapes. Shapes may share edges /
+	 *                 touch (forming a 'Planar graph') but interiors cannot
+	 *                 overlap. assuming non-nested/non-overlapping polygons
+	 *                 (mesh-like, at most (if share edges)
+	 */
+	public TrapMap(List<PShape> polygons) {
+		final Map<Integer, Segment> segments = new HashMap<>(polygons.size() * 3);
+		for (PShape polygon : polygons) {
+			if (polygon.getFamily() == PShape.PRIMITIVE || polygon.getFamily() == PShape.GROUP) {
+				continue; // process polygonal shapes only
+			}
+			Segment s;
+			int loop = polygon.isClosed() ? -1 : 0; // when isClosed, create a segment between first and last vertices
+			for (int i = 0; i < polygon.getVertexCount() - 1; i++) {
+				s = new Segment(polygon.getVertex(i), polygon.getVertex(i + 1), polygon);
+				if (segments.containsKey(s.hashCode())) {
+					Segment other = segments.get(s.hashCode());
+					if (other.faceA != polygon) {
+						other.setFaceB(polygon); // link the polygon twinned with this edge
+					}
+				} else {
+					segments.put(s.hashCode(), s);
+				}
+			}
+			if (polygon.isClosed() || polygon.getVertex(0).equals(polygon.getVertex(polygon.getVertexCount() - 1))) {
+				// create a segment between first and last vertices
+				s = new Segment(polygon.getVertex(polygon.getVertexCount() - 1), polygon.getVertex(0), polygon);
+				if (segments.containsKey(s.hashCode())) {
+					Segment other = segments.get(s.hashCode());
+					if (other.faceA != polygon) {
+						other.setFaceB(polygon); // link this polygon with existing segment (pseudo-DCEL)
+					}
+				} else {
+					segments.put(s.hashCode(), s);
+				}
+			}
+		}
+
+		process(segments.values());
 	}
 
 	/**
-	 * Builds the trapezoidal map search structure from the segment array. The
-	 * initial boundary is provided in terms of 4 ints. This constructor builds both
-	 * the physical map structure (creating the neighbor links for each trapezoid)
-	 * and also incrementally builds the map search structure (using nodes in a
-	 * pseudo-tree)
-	 * 
-	 * Details of the algorithm are included as comments throughout the constructor
+	 * Builds the trapezoidal map search structure from the collection of segments.
+	 * This constructor builds both the physical map structure (creating the
+	 * neighbor links for each trapezoid) and also incrementally builds the map
+	 * search structure (using nodes in a pseudo-tree).
 	 *
 	 * @param segments The list of segments to build a search structure for
-	 * @param lx       initial left bound
-	 * @param rx       initial right bound
-	 * @param ly       initial lower bound
-	 * @param ry       initial upper bound
 	 */
-	public TrapezoidalMap(Segment[] segments) {
+	public TrapMap(Collection<Segment> segments) {
+		process(segments);
+	}
+
+	private void process(Collection<Segment> segments) {
 		// 1. Determine a bounding box for the segments
 		Trapezoid bounds = computeBounds(segments);
 		Leaf f = new Leaf(bounds);
@@ -62,7 +101,6 @@ public class TrapezoidalMap {
 		// the array is first duplicated in case the ordering is important in the
 		// original array
 //		Segment[] arr = Arrays.copyOf(segs, segs.length);
-		Segment[] segs = segments; // relabel array
 //		Random r = new Random();
 //		int rnd;
 //		Segment temp;
@@ -76,12 +114,14 @@ public class TrapezoidalMap {
 //			arr[rnd] = temp;
 //		}
 
+		Segment[] segs = segments.toArray(new Segment[segments.size()]); // relabel array
+
 		// 3. incrementally make the trapezoidal map
 		for (Segment seg : segs) {
 			// find the trapezoids intersected by arr[i]
 			Leaf[] list = followSegment(seg);
 
-			if (list.length == 1) {// the segment is entirely within a single trapezoid
+			if (list.length == 1) { // the segment is entirely within a single trapezoid
 
 				// split into 4 sections
 				Trapezoid old = list[0].getData();
@@ -520,7 +560,7 @@ public class TrapezoidalMap {
 	/**
 	 * Computes the rectangular bounding box for the set of segments.
 	 */
-	private Trapezoid computeBounds(Segment[] segments) {
+	private Trapezoid computeBounds(Collection<Segment> segments) {
 		// Compute bounding box so that there is no infinite face
 		float minx = Float.MAX_VALUE;
 		float maxx = -Float.MAX_VALUE;
@@ -587,7 +627,7 @@ public class TrapezoidalMap {
 		list.add(previous);
 		while (compareTo(s.getRightPoint(), previous.getData().getRightBound()) > 0) {
 			// choose the next trapezoid in the sequence
-			if (TrapezoidalMap.isPointAboveLine(previous.getData().getRightBound(), s)) {
+			if (TrapMap.isPointAboveLine(previous.getData().getRightBound(), s)) {
 				previous = previous.getData().getLowerRightNeighbor().getLeaf();
 			} else {
 				previous = previous.getData().getUpperRightNeighbor().getLeaf();
@@ -634,7 +674,7 @@ public class TrapezoidalMap {
 	public Trapezoid findTrapezoid(PVector p) {
 		Node current = root;
 		while (!(current instanceof Leaf)) {
-			if (current instanceof XNode) {
+			if (current instanceof XNode) { // point query: does p lie to the left or the right of a given point?
 				final int val = compareTo(p, ((XNode) current).getData());
 				if (val < 0) {
 					current = current.getLeftChildNode();
@@ -642,6 +682,7 @@ public class TrapezoidalMap {
 					current = current.getRightChildNode();
 				}
 			} else // we are searching for a point, without segment information
+					// segment query: does p lie above or below a given line segment?
 			if (isPointAboveLine(p, ((YNode) current).getData())) {
 				current = current.getLeftChildNode();
 			} else {
@@ -666,6 +707,10 @@ public class TrapezoidalMap {
 		// trapezoid -> original polygon.
 		return set;
 
+	}
+
+	public PShape findFace(PVector p) {
+		return findTrapezoid(p).getFace();
 	}
 
 	private void recursePolygon(Trapezoid t, Set<Trapezoid> pp) {
