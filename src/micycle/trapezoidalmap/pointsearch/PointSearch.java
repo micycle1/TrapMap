@@ -5,7 +5,7 @@ import javax.swing.WindowConstants;
 
 import micycle.trapezoidalmap.gui.DisplayPanel;
 import micycle.trapezoidalmap.gui.DrawSegments;
-import micycle.trapezoidalmap.data.SearchStructure;
+import micycle.trapezoidalmap.data.TrapezoidalMap;
 import micycle.trapezoidalmap.data.Segment;
 
 /**
@@ -51,7 +51,7 @@ public class PointSearch {
 		Segment[] arr = ds.getSegments();
 		System.out.println("got the segments! " + arr.length);
 //            storeLines(args[1], arr);
-		SearchStructure ss = new SearchStructure(arr, 0, 1200, 0, 800);
+		TrapezoidalMap ss = new TrapezoidalMap(arr);
 
 		JFrame f2 = new JFrame();
 		// send the list to the DisplayPanel

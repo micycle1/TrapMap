@@ -4,13 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents an abstract node with parents, left child, and right child The
- * abstract node holds no data; extensions hold different types of data
+ * Represents an abstract tree node with parents, left child, and right child
+ * The abstract node holds no data; extensions hold different types of data.
  * 
  * @author Tyler Chenhall
  */
 public abstract class Node {
-	
+
 	private Node parent = null;
 	private Node leftChild = null;
 	private Node rightChild = null;

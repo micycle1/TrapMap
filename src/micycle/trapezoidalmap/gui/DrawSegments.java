@@ -23,6 +23,7 @@ import processing.core.PVector;
  *
  * @author Tyler Chenhall
  */
+@SuppressWarnings("serial")
 public class DrawSegments extends JPanel implements Runnable {
 
 	private static final int DELAY = 25;// (25) pause between repaints

@@ -12,13 +12,14 @@ import processing.core.PVector;
  * @author Tyler Chenhall
  */
 public final class Trapezoid {
-	// neighbors of this trapezoid
 
+	// neighbors of this trapezoid
 	private Trapezoid uleft_neighbor;
 	private Trapezoid lleft_neighbor;
 	private Trapezoid uright_neighbor;
 	private Trapezoid lright_neighbor;
 	private Leaf owner;
+
 	// variables describing the trapezoid shape
 	private PVector leftP;
 	private PVector rightP;
@@ -35,15 +36,7 @@ public final class Trapezoid {
 	 * @param top    Segment determining the upper boundary
 	 * @param bottom Segment determining the lower boundary
 	 */
-	/*
-	 * Old implementation public Trapezoid(int left, int right, Segment top, Segment
-	 * bottom) { //implement instantiation method //leftX = left; //rightX = right;
-	 * topSeg = top; botSeg = bottom;
-	 * 
-	 * uleft_neighbor = null; lleft_neighbor = null; uright_neighbor = null;
-	 * lright_neighbor = null; }
-	 */
-	public Trapezoid(PVector left,PVector right, Segment top, Segment bottom) {
+	public Trapezoid(PVector left, PVector right, Segment top, Segment bottom) {
 		leftP = left;
 		rightP = right;
 		topSeg = top;
@@ -170,22 +163,6 @@ public final class Trapezoid {
 	}
 
 	/**
-	 * Returns the boundary of this trapezoid as an array of 4 segments. (Old)
-	 *
-	 * @return The array of segments representing the boundary
-	 */
-	public Segment[] getBoundary() {
-		PVector tl = topSeg.intersect(leftP.x);
-		PVector tr = topSeg.intersect(rightP.x);
-		PVector bl = botSeg.intersect(leftP.x);
-		PVector br = botSeg.intersect(rightP.x);
-		Segment[] segs = { new Segment(tl, tr), new Segment(tr, br), new Segment(br, bl), new Segment(bl, tl) };
-
-		// Line2D.Double[] arr = {topSeg.getline(), botSeg.getline()};
-		return segs;
-	}
-
-	/**
 	 * Returns the boundary of the trapezoid as a Polygon object for easy display.
 	 *
 	 * @return The polygon object representing the boundary of the Trapezoid
@@ -195,8 +172,8 @@ public final class Trapezoid {
 		PVector tr = top.intersect(right.x);
 		PVector bl = bottom.intersect(left.x);
 		PVector br = bottom.intersect(right.x);
-		int[] xx = { (int) tl.x, (int)tr.x, (int)br.x, (int)bl.x };
-		int[] yy = { (int)tl.y, (int)tr.y, (int)br.y,(int) bl.y };
+		int[] xx = { (int) tl.x, (int) tr.x, (int) br.x, (int) bl.x };
+		int[] yy = { (int) tl.y, (int) tr.y, (int) br.y, (int) bl.y };
 		return new Polygon(xx, yy, 4); // TODO TO PSHAPE
 	}
 
@@ -215,7 +192,6 @@ public final class Trapezoid {
 	 * @return True if the trapezoid is a sliver with zero width
 	 */
 	public boolean hasZeroWidth() {
-		return leftP.equals(rightP);
-		// return (leftP.getX()-rightP.getX() == 0);
+		return leftP.x == rightP.x;
 	}
 }

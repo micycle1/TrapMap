@@ -1,12 +1,13 @@
 package micycle.trapezoidalmap.data;
 
 /**
- * A leaf stores a trapezoid as its data. a leaf should not have child nodes but
- * the capability is still present
+ * A leaf stores a trapezoid as its data. A leaf should not have child nodes but
+ * the capability is still present.
  * 
  * @author Tyler Chenhall
  */
 public class Leaf extends Node {
+
 	private Trapezoid data;
 
 	public Leaf(Trapezoid t) {

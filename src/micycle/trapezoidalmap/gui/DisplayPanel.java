@@ -13,7 +13,7 @@ import java.util.ArrayList;
 
 import javax.swing.JPanel;
 
-import micycle.trapezoidalmap.data.SearchStructure;
+import micycle.trapezoidalmap.data.TrapezoidalMap;
 import micycle.trapezoidalmap.data.Segment;
 import micycle.trapezoidalmap.data.Trapezoid;
 import processing.core.PVector;
@@ -32,7 +32,7 @@ public class DisplayPanel extends JPanel implements Runnable {
 	private Thread t;
 	private Segment[] segments = null;
 	private Trapezoid highlighted;
-	private SearchStructure search;
+	private TrapezoidalMap search;
 
 	/**
 	 * Initialize the DisplayPanel with a list of segments to be used for this run.
@@ -41,7 +41,7 @@ public class DisplayPanel extends JPanel implements Runnable {
 	 * @param segs The segment array to use
 	 * @param s    The search structure corresponding to the given segment array
 	 */
-	public DisplayPanel(Segment[] segs, SearchStructure s) {
+	public DisplayPanel(Segment[] segs, TrapezoidalMap s) {
 		segments = segs;
 		search = s;
 		highlighted = null;
@@ -88,7 +88,7 @@ public class DisplayPanel extends JPanel implements Runnable {
 	public void cycle() {
 		// do any necessary update calculations between display stuff
 		// there may not be anything here
-		highlighted = search.findPointTrap(new PVector(xval, yval));
+		highlighted = search.findTrapezoid(new PVector(xval, yval));
 	}
 
 	@Override
