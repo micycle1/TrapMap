@@ -27,7 +27,7 @@ import processing.core.PVector;
  */
 public class TrapezoidalMap {
 
-	private Node root;
+	private Node root; // root for rooted tree (DAG)
 
 	public TrapezoidalMap(Collection<Segment> segs, float lx, float rx, float ly, float ry) {
 		this(segs.toArray(new Segment[segs.size()]));
@@ -56,6 +56,7 @@ public class TrapezoidalMap {
 		root = f;
 
 		// 2. shuffle the segments // NOTE SKIPPING SHUFFLE
+		// "Size of D and query time depend on insertion order"
 		// the array is first duplicated in case the ordering is important in the
 		// original array
 //		Segment[] arr = Arrays.copyOf(segs, segs.length);
@@ -518,6 +519,7 @@ public class TrapezoidalMap {
 	 * Computes the rectangular bounding box for the set of segments.
 	 */
 	private Trapezoid computeBounds(Segment[] segments) {
+		// Compute bounding box so that there is no infinite face
 		float minx = Float.MAX_VALUE;
 		float maxx = -Float.MAX_VALUE;
 		float miny = Float.MAX_VALUE;
@@ -658,6 +660,7 @@ public class TrapezoidalMap {
 		Set<Trapezoid> set = new HashSet<>();
 		recursePolygon(findTrapezoid(p), set);
 		// TODO find way to map group back to original polygons, then map single
+		// MAP OF TRAPEZOID -> TRAPEZOID GROUP -> ORIGINAL FACE
 		// trapezoid -> original polygon.
 		return set;
 
@@ -730,6 +733,7 @@ public class TrapezoidalMap {
 	}
 
 	private static int compareTo(PVector a, PVector b) {
+		// Handle degeneracies by using comparison rules to mimic x-coordinate shearing
 		if (a.x < b.x || (a.x == b.x && a.y < b.y)) {
 			return -1;
 		} else if ((a.x == b.x) && (a.y == b.y)) {

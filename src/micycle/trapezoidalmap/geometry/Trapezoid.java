@@ -1,18 +1,22 @@
 package micycle.trapezoidalmap.geometry;
 
-import java.awt.Polygon;
-
 import micycle.trapezoidalmap.tree.Leaf;
+import processing.core.PConstants;
+import processing.core.PShape;
 import processing.core.PVector;
 
 /**
  * Represents a trapezoid object in the trapezoidal map or search structure.
+ * <p>
+ * Each trapezoid ∆ is determined by: A bottom segment bottom(∆). A top segment
+ * top(∆). A left vertex leftp(∆). A right vertex rightp(∆)
  * 
  * @author Tyler Chenhall
  */
 public final class Trapezoid {
 
-	// neighbors of this trapezoid
+	// Neighbors of this trapezoid
+	// Two trapezoids are neighbors if they share a vertical edge
 	private Trapezoid uleft_neighbor;
 	private Trapezoid lleft_neighbor;
 	private Trapezoid uright_neighbor;
@@ -24,7 +28,7 @@ public final class Trapezoid {
 	private PVector rightP;
 	private Segment topSeg;
 	private Segment botSeg;
-	private Polygon poly;
+	private PShape poly;
 
 	/**
 	 * Constructs a trapezoid object based on the x boundaries and bounding
@@ -146,6 +150,51 @@ public final class Trapezoid {
 		return owner;
 	}
 
+	/**
+	 * Return the boundary polygon for this trapezoid
+	 * 
+	 * @return The boundary Polygon
+	 */
+	public PShape getBoundaryPolygon() {
+		if (poly == null) {
+			poly = getPrivateBoundaryPolygon(leftP, rightP, topSeg, botSeg);
+		}
+		return poly;
+	}
+
+	/**
+	 * Returns the boundary of the trapezoid as a Polygon object for easy display.
+	 *
+	 * @return The polygon object representing the boundary of the Trapezoid
+	 */
+	private PShape getPrivateBoundaryPolygon(PVector left, PVector right, Segment top, Segment bottom) {
+		final PVector tl = top.intersect(left.x);
+		final PVector tr = top.intersect(right.x);
+		final PVector bl = bottom.intersect(left.x);
+		final PVector br = bottom.intersect(right.x);
+
+		final PShape polygon = new PShape();
+		polygon.setFamily(PShape.PATH);
+		polygon.setFill(true);
+		polygon.setFill(-255);
+		polygon.beginShape();
+		polygon.vertex((int) tl.x, (int) tl.y);
+		polygon.vertex((int) tr.x, (int) tr.y);
+		polygon.vertex((int) br.x, (int) br.y);
+		polygon.vertex((int) bl.x, (int) bl.y);
+		polygon.endShape(PConstants.CLOSE);
+		return polygon;
+	}
+
+	/**
+	 * Return true if this trapezoid has zero width
+	 * 
+	 * @return True if the trapezoid is a sliver with zero width
+	 */
+	public boolean hasZeroWidth() {
+		return leftP.x == rightP.x;
+	}
+
 	@Override
 	/**
 	 * Two trapezoids are equal iff they have the same bounding segments
@@ -156,41 +205,5 @@ public final class Trapezoid {
 		}
 		Trapezoid tt = (Trapezoid) t;
 		return (this.topSeg == tt.topSeg) && (this.botSeg == tt.botSeg);
-	}
-
-	/**
-	 * Returns the boundary of the trapezoid as a Polygon object for easy display.
-	 *
-	 * @return The polygon object representing the boundary of the Trapezoid
-	 */
-	private Polygon getPrivateBoundaryPolygon(PVector left, PVector right, Segment top, Segment bottom) {
-		PVector tl = top.intersect(left.x);
-		PVector tr = top.intersect(right.x);
-		PVector bl = bottom.intersect(left.x);
-		PVector br = bottom.intersect(right.x);
-		int[] xx = { (int) tl.x, (int) tr.x, (int) br.x, (int) bl.x };
-		int[] yy = { (int) tl.y, (int) tr.y, (int) br.y, (int) bl.y };
-		return new Polygon(xx, yy, 4); // TODO TO PSHAPE
-	}
-
-	/**
-	 * Return the boundary polygon for this trapezoid
-	 * 
-	 * @return The boundary Polygon
-	 */
-	public Polygon getBoundaryPolygon() {
-		if (poly == null) {
-			poly = this.getPrivateBoundaryPolygon(leftP, rightP, topSeg, botSeg);
-		}
-		return poly;
-	}
-
-	/**
-	 * Return true if this trapezoid has zero width
-	 * 
-	 * @return True if the trapezoid is a sliver with zero width
-	 */
-	public boolean hasZeroWidth() {
-		return leftP.x == rightP.x;
 	}
 }
