@@ -31,6 +31,7 @@ public class TrapMap {
 	// TODO HANDLE POINT INPUT FOR NEAREST NEIGHBOUR
 
 	private Node root; // root of trapezoid history graph
+	private List<Trapezoid> trapezoids; // all (leaf) trapezoids contained in the map 
 
 	/**
 	 * 
@@ -204,7 +205,7 @@ public class TrapMap {
 					lowerLink(bottom, righty);
 					upperLink(righty, old.getUpperRightNeighbor());
 					upperLink(top, righty);
-				} else if (righty.hasZeroWidth() && !lefty.hasZeroWidth()) {// only right has zero width
+				} else if (righty.hasZeroWidth() && !lefty.hasZeroWidth()) { // only right has zero width
 					// link all the nodes for the trapezoids
 					ll.setLeftChildNode(leftyN);
 					ll.setRightChildNode(ss);
@@ -534,7 +535,6 @@ public class TrapMap {
 					}
 
 					yy.setLeftChildNode(topLeaf[j]);
-
 					yy.setRightChildNode(botLeaf[j]);
 
 					// insert the new structure in place of the old one
@@ -773,8 +773,29 @@ public class TrapMap {
 		return isPointAboveLine(p, old);
 	}
 
-	public void getAllTrapezoids() {
-		// TODO return all leaf trapezoids
+	public List<Trapezoid> getAllTrapezoids() {
+		if (trapezoids == null) { // build lazily
+			final Set<Leaf> leaves = new HashSet<>();
+			
+			recurseChildNodes(root, leaves);
+			
+			trapezoids = new ArrayList<>(leaves.size());
+			leaves.forEach(l -> trapezoids.add(l.getData()));
+		}
+		return trapezoids;
+	}
+	
+	private static void recurseChildNodes(Node n, Set<Leaf> leaves) {
+		if (!leaves.contains(n)) {
+			if (n instanceof Leaf == false) {
+				recurseChildNodes(n.getLeftChildNode(), leaves);
+				recurseChildNodes(n.getRightChildNode(), leaves);
+			}
+			else {
+				leaves.add((Leaf) n);
+			}
+		}
+
 	}
 
 	private static int compareTo(PVector a, PVector b) {
