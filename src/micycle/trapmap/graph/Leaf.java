@@ -1,10 +1,9 @@
-package micycle.trapmap.tree;
+package micycle.trapmap.graph;
 
-import micycle.trapmap.geometry.Trapezoid;
+import micycle.trapmap.Trapezoid;
 
 /**
- * A leaf stores a trapezoid as its data. A leaf should not have child nodes but
- * the capability is still present.
+ * Leafs model trapezoids at the lowest level of the History Graph.
  * 
  * @author Tyler Chenhall
  */

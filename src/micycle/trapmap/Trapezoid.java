@@ -1,6 +1,6 @@
-package micycle.trapmap.geometry;
+package micycle.trapmap;
 
-import micycle.trapmap.tree.Leaf;
+import micycle.trapmap.graph.Leaf;
 import processing.core.PConstants;
 import processing.core.PShape;
 import processing.core.PVector;
@@ -8,10 +8,14 @@ import processing.core.PVector;
 /**
  * Represents a trapezoid object in the trapezoidal map or search structure.
  * <p>
- * Each trapezoid ∆ is determined by: A bottom segment bottom(∆). A top segment
- * top(∆). A left vertex leftp(∆). A right vertex rightp(∆)
+ * Each trapezoid ∆ is determined by:
+ * <li>A bottom segment bottom(∆)</li>
+ * <li>A top segment top(∆)</li>
+ * <li>A left vertex leftp(∆)</li>
+ * <li>A right vertex rightp(∆)</li>
  * 
  * @author Tyler Chenhall
+ * @author Michael Carleton
  */
 public final class Trapezoid {
 
@@ -32,11 +36,15 @@ public final class Trapezoid {
 
 	/**
 	 * Boolean flag that indicates whether the mapping to the polygonal face this
-	 * trapezium belongs to has been computed.
+	 * trapezoid belongs to has been computed.
 	 */
 	boolean computedFace = false;
-	private PShape face = null; // actual face (computed lazily), depending on neighbours, (and whether TrapMap
-	// was created using shapes)
+	/**
+	 * The original polygon face/cell this trapezoid belongs to (computed lazily).
+	 * May remain null (and will always be null if TrapMap was created from segments
+	 * only).
+	 */
+	private PShape face = null;
 
 	/**
 	 * Constructs a trapezoid object based on the x boundaries and bounding
@@ -47,7 +55,7 @@ public final class Trapezoid {
 	 * @param top    Segment determining the upper boundary
 	 * @param bottom Segment determining the lower boundary
 	 */
-	public Trapezoid(PVector left, PVector right, Segment top, Segment bottom) {
+	Trapezoid(PVector left, PVector right, Segment top, Segment bottom) {
 		leftP = left;
 		rightP = right;
 		topSeg = top;
@@ -100,7 +108,7 @@ public final class Trapezoid {
 	 * Get the trapezoid which lies to the left of this trapezoid below the left
 	 * boundary vertex
 	 * 
-	 * @return The lower left neighbor
+	 * @return The lower left neighbor (possibly null)
 	 */
 	public Trapezoid getLowerLeftNeighbor() {
 		return lleft_neighbor;
@@ -110,7 +118,7 @@ public final class Trapezoid {
 	 * Get the trapezoid which lies to the left of this one, above the left boundary
 	 * vertex
 	 * 
-	 * @return the upper left neighbor trapezoid
+	 * @return the upper left neighbor trapezoid (possibly null)
 	 */
 	public Trapezoid getUpperLeftNeighbor() {
 		return uleft_neighbor;
@@ -124,19 +132,19 @@ public final class Trapezoid {
 		return uright_neighbor;
 	}
 
-	public void setLowerLeftNeighbor(Trapezoid t) {
+	void setLowerLeftNeighbor(Trapezoid t) {
 		lleft_neighbor = t;
 	}
 
-	public void setUpperLeftNeighbor(Trapezoid t) {
+	void setUpperLeftNeighbor(Trapezoid t) {
 		uleft_neighbor = t;
 	}
 
-	public void setLowerRightNeighbor(Trapezoid t) {
+	void setLowerRightNeighbor(Trapezoid t) {
 		lright_neighbor = t;
 	}
 
-	public void setUpperRightNeighbor(Trapezoid t) {
+	void setUpperRightNeighbor(Trapezoid t) {
 		uright_neighbor = t;
 	}
 
@@ -145,7 +153,7 @@ public final class Trapezoid {
 	 * 
 	 * @param l The leaf containing this trapezoid
 	 */
-	public void setLeaf(Leaf l) {
+	void setLeaf(Leaf l) {
 		owner = l;
 	}
 
@@ -159,7 +167,7 @@ public final class Trapezoid {
 	}
 
 	/**
-	 * Gets the mapped polygonal face that this trapezium is a part of.
+	 * Gets the mapped polygonal face that this trapezoid is a part of.
 	 * 
 	 * @return Null if trapezoid lies outside polygons, or no polygons were set up.
 	 */
@@ -171,10 +179,10 @@ public final class Trapezoid {
 			final PShape f4 = botSeg.faceB;
 
 			/*
-			 * If the trapezium is mapped to a face, then the polygonal face in which the
-			 * trapezium lies can be computed by first retrieving the enclosing segments,
+			 * If the trapezoid is mapped to a face, then the polygonal face in which the
+			 * trapezoid lies can be computed by first retrieving the enclosing segments,
 			 * and then finding the face that is shared by two of these segments (this is
-			 * the face that is properly enclosed by the trapezium's top and bottom
+			 * the face that is properly enclosed by the trapezoid's top and bottom
 			 * segments).
 			 */
 			if (f1 != null) {
@@ -244,7 +252,7 @@ public final class Trapezoid {
 	 * 
 	 * @return True if the trapezoid is a sliver with zero width
 	 */
-	public boolean hasZeroWidth() {
+	boolean hasZeroWidth() {
 		return leftP.x == rightP.x;
 	}
 

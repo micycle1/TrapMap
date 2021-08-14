@@ -8,12 +8,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import micycle.trapmap.geometry.Segment;
-import micycle.trapmap.geometry.Trapezoid;
-import micycle.trapmap.tree.Leaf;
-import micycle.trapmap.tree.Node;
-import micycle.trapmap.tree.XNode;
-import micycle.trapmap.tree.YNode;
+import micycle.trapmap.graph.Leaf;
+import micycle.trapmap.graph.Node;
+import micycle.trapmap.graph.XNode;
+import micycle.trapmap.graph.YNode;
 import processing.core.PShape;
 import processing.core.PVector;
 
@@ -32,7 +30,7 @@ public class TrapMap {
 
 	// TODO HANDLE POINT INPUT FOR NEAREST NEIGHBOUR
 
-	private Node root; // root of tree (DAG)
+	private Node root; // root of trapezoid history graph
 
 	/**
 	 * 
@@ -47,29 +45,24 @@ public class TrapMap {
 			if (polygon.getFamily() == PShape.PRIMITIVE || polygon.getFamily() == PShape.GROUP) {
 				continue; // process polygonal shapes only
 			}
-			Segment s;
-			int loop = polygon.isClosed() ? -1 : 0; // when isClosed, create a segment between first and last vertices
-			for (int i = 0; i < polygon.getVertexCount() - 1; i++) {
-				s = new Segment(polygon.getVertex(i), polygon.getVertex(i + 1), polygon);
-				if (segments.containsKey(s.hashCode())) {
-					Segment other = segments.get(s.hashCode());
-					if (other.faceA != polygon) {
-						other.setFaceB(polygon); // link the polygon twinned with this edge
+			for (int i = 0; i < polygon.getVertexCount(); i++) {
+				Segment s = null;
+				if (i < polygon.getVertexCount() - 1) {
+					s = new Segment(polygon.getVertex(i), polygon.getVertex(i + 1), polygon);
+				} else { // at last vertex
+					if (polygon.isClosed() || !polygon.getVertex(0).equals(polygon.getVertex(polygon.getVertexCount() - 1))) {
+						// create a segment between first and last vertices to close shape
+						s = new Segment(polygon.getVertex(polygon.getVertexCount() - 1), polygon.getVertex(0), polygon);
+					} else {
+						continue;
 					}
-				} else {
-					segments.put(s.hashCode(), s);
 				}
-			}
-			if (polygon.isClosed() || polygon.getVertex(0).equals(polygon.getVertex(polygon.getVertexCount() - 1))) {
-				// create a segment between first and last vertices
-				s = new Segment(polygon.getVertex(polygon.getVertexCount() - 1), polygon.getVertex(0), polygon);
-				if (segments.containsKey(s.hashCode())) {
-					Segment other = segments.get(s.hashCode());
-					if (other.faceA != polygon) {
-						other.setFaceB(polygon); // link this polygon with existing segment (pseudo-DCEL)
+
+				if (segments.putIfAbsent(s.hashCode(), s) != null) {
+					final Segment other = segments.get(s.hashCode());
+					if (other.faceA != polygon) { // this should never be false
+						other.faceB = polygon; // link the polygon twinned with this edge
 					}
-				} else {
-					segments.put(s.hashCode(), s);
 				}
 			}
 		}
@@ -83,9 +76,14 @@ public class TrapMap {
 	 * neighbor links for each trapezoid) and also incrementally builds the map
 	 * search structure (using nodes in a pseudo-tree).
 	 *
-	 * @param segments The list of segments to build a search structure for
+	 * @param segments The list of segments to build a search structure for /
+	 *                 segments that partition the plane into cells
 	 */
 	public TrapMap(Collection<Segment> segments) {
+		if (segments instanceof Set == false) {
+			// hash to both remove possible duplicates & shuffle the collection
+			segments = new HashSet<>(segments);
+		}
 		process(segments);
 	}
 
@@ -776,7 +774,7 @@ public class TrapMap {
 	}
 
 	public void getAllTrapezoids() {
-		// TODO
+		// TODO return all leaf trapezoids
 	}
 
 	private static int compareTo(PVector a, PVector b) {

@@ -1,10 +1,11 @@
-package micycle.trapmap.tree;
+package micycle.trapmap.graph;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents an abstract tree node with parents, left child, and right child
+ * Represents an abstract tree node with parents, left child, and right child.
+ * <p>
  * The abstract node holds no data; extensions hold different types of data.
  * 
  * @author Tyler Chenhall
@@ -17,7 +18,7 @@ public abstract class Node {
 	private List<Node> parents;
 
 	public Node() {
-		parents = new ArrayList<>(1);
+		parents = new ArrayList<>(2);
 	}
 
 	/**

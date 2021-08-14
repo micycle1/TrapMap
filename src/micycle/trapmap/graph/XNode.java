@@ -1,9 +1,9 @@
-package micycle.trapmap.tree;
+package micycle.trapmap.graph;
 
 import processing.core.PVector;
 
 /**
- * An X node stores a segment end point
+ * An X node stores a segment end point.
  * 
  * @author Tyler Chenhall
  */

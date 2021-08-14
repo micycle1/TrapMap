@@ -1,9 +1,9 @@
-package micycle.trapmap.tree;
+package micycle.trapmap.graph;
 
-import micycle.trapmap.geometry.Segment;
+import micycle.trapmap.Segment;
 
 /**
- * A y-node stores a segment
+ * A y-node stores a segment.
  * 
  * @author Tyler Chenhall
  */

@@ -1,11 +1,11 @@
-package micycle.trapmap.geometry;
+package micycle.trapmap;
 
 import processing.core.PShape;
 import processing.core.PVector;
 
 /**
- * Represents a segment by its endpoints. Endpoints are stored in order as given
- * by the compareTo function of the Point class.
+ * Represents a line segment by its endpoints. Endpoints are stored in order as
+ * given by the compareTo function of the Point class.
  *
  * @author Tyler Chenhall
  */
@@ -13,9 +13,9 @@ public class Segment {
 
 	private PVector lPoint;
 	private PVector rPoint;
-	
-	public PShape faceA; // segment will always have one face
-	public PShape faceB; // possible (such as mesh)
+
+	PShape faceA; // segment will always have one face
+	PShape faceB; // possible (such as mesh)
 
 	public Segment(PVector one, PVector two) {
 		// we store the left, lower point as lpoint
@@ -28,8 +28,16 @@ public class Segment {
 			rPoint = one;
 		}
 	}
-	
-	public Segment(PVector one, PVector two, PShape face) {
+
+	/**
+	 * Constructs a segment with reference to the polygonal face whose member is the
+	 * segment.
+	 * 
+	 * @param one
+	 * @param two
+	 * @param face
+	 */
+	Segment(PVector one, PVector two, PShape face) {
 		// we store the left, lower point as lpoint
 		// the other point is stored as rpoint
 		if (compareTo(one, two) <= 0) {
@@ -72,7 +80,7 @@ public class Segment {
 	 *
 	 * @return The minimum x value
 	 */
-	public float getMinX() {
+	float getMinX() {
 		return lPoint.x;
 	}
 
@@ -81,7 +89,7 @@ public class Segment {
 	 *
 	 * @return The maximum x value
 	 */
-	public float getMaxX() {
+	float getMaxX() {
 		return rPoint.x;
 	}
 
@@ -90,7 +98,7 @@ public class Segment {
 	 *
 	 * @return The minimum y value
 	 */
-	public float getMinY() {
+	float getMinY() {
 		return Math.min(lPoint.y, rPoint.y);
 	}
 
@@ -99,12 +107,8 @@ public class Segment {
 	 *
 	 * @return The maximum y value
 	 */
-	public float getMaxY() {
+	float getMaxY() {
 		return Math.max(lPoint.y, rPoint.y);
-	}
-	
-	public void setFaceB(PShape face) {
-		faceB = face;
 	}
 
 	/**
@@ -115,7 +119,7 @@ public class Segment {
 	 * @param x The x-value to intersect the line at
 	 * @return The point on the line (segment) at the given x-value
 	 */
-	public PVector intersect(float x) {
+	PVector intersect(float x) {
 		if (lPoint.x != rPoint.x) {
 			float ysum = ((x - lPoint.x)) * (rPoint.y) + ((rPoint.x - x)) * (lPoint.y);
 			float yval = ysum / (rPoint.x - lPoint.x);
@@ -155,7 +159,7 @@ public class Segment {
 	 * @return True if the segments intersect at a point which is not a common
 	 *         vertex
 	 */
-	public boolean crosses(Segment other) {
+	boolean crosses(Segment other) {
 		// check if x-ranges overlap
 		if ((other.lPoint.x > this.rPoint.x) || (other.rPoint.x < this.lPoint.x)) {
 			return false;
@@ -170,10 +174,12 @@ public class Segment {
 		} else if (this.isVertical()) {
 			PVector p = other.intersect(this.lPoint.x);
 			return (p.y > this.getMinY()) && (p.y < this.getMaxY());
-		} else {// neither is a vertical line
-			// we use a bounding box technique instead of directly computing the
-			// intersection
-			// it is quite possible we aren't saving any time with this strategy
+		} else { // neither segment is a vertical line
+			/*
+			 * We use a bounding box technique instead of directly computing the
+			 * intersection. It is quite possible we aren't saving any time with this
+			 * strategy.
+			 */
 
 			// must find the intersection points
 			double slope1 = this.getSlope();
