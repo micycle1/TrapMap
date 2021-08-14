@@ -8,6 +8,11 @@
 	<name>TrapMap</name>
 	<description>Trapezoidal Map library; a data structure for fast point-in-region (point location) queries.</description>
 
+	<properties>
+		<sonar.organization>micycle</sonar.organization>
+		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
+	</properties>
+
 	<build>
 		<sourceDirectory>src/main/java</sourceDirectory>
 		<testSourceDirectory>src/test/java</testSourceDirectory>
@@ -86,5 +91,5 @@
 		</dependency>
 	</dependencies>
 
-	
+
 </project>
