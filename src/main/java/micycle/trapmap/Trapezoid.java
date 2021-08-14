@@ -162,7 +162,7 @@ public final class Trapezoid {
 	 * 
 	 * @return The leaf pointing to this trapezoid
 	 */
-	public Leaf getLeaf() {
+	Leaf getLeaf() {
 		return owner;
 	}
 

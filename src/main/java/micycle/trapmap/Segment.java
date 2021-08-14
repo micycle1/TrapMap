@@ -217,7 +217,8 @@ public class Segment {
 
 	@Override
 	public int hashCode() {
-		return Float.floatToIntBits(lPoint.x + rPoint.x) ^ Float.floatToIntBits(lPoint.y + rPoint.y);
+		// + 1 in y points so (10,5) and (5,10) (for example) hash to different values
+		return Float.floatToIntBits(lPoint.x + rPoint.x) ^ Float.floatToIntBits(lPoint.y + rPoint.y + 1);
 	}
 
 	private static int compareTo(PVector a, PVector b) {
