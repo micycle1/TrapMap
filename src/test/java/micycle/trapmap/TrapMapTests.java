@@ -17,7 +17,7 @@ class TrapMapTests {
 
 	@Test
 	void testPointLocationFromSegments() {
-		List<Segment> segments = new ArrayList<>();
+		final List<Segment> segments = new ArrayList<>();
 
 		// larger box
 		Segment s1 = new Segment(0, 0, 100, 0); // horizontal top
@@ -36,26 +36,27 @@ class TrapMapTests {
 		final TrapMap trapMap = new TrapMap(segments);
 
 		// smaller box region
-		Set<Trapezoid> t1 = trapMap.findTrapezoids(50.1f, 50.2f);
+		Set<Trapezoid> t1 = trapMap.findTrapezoids(26.1f, 26.2f);
 		Set<Trapezoid> t2 = trapMap.findTrapezoids(30, 30);
 		Set<Trapezoid> t3 = trapMap.findTrapezoids(60, 60);
 		assertEquals(true, t1.equals(t2));
 		assertEquals(true, t2.equals(t3));
 		assertEquals(0, trapMap.findTrapezoids(999, 999).size());
-		System.out.println(trapMap.findTrapezoids(999, 999).size());
 
+		// larger box region
 		Set<Trapezoid> t4 = trapMap.findTrapezoids(20.1f, 20.1f);
 		Set<Trapezoid> t5 = trapMap.findTrapezoids(50, 90);
 		Set<Trapezoid> t6 = trapMap.findTrapezoids(80, 80);
 		assertEquals(true, t4.equals(t5));
 		assertEquals(true, t5.equals(t6));
+
 		assertEquals(false, t1.equals(t4));
 	}
 
 	@Test
-	void testPointLocationFromPolygons() {
+	void testPointLocationFromQuads() {
 
-		// top and bottom share an edge [(0,0) -> (100,0)]
+		// top and bottom share a horizontal edge [(0,0) -> (100,0)]
 
 		final PShape top = new PShape();
 		top.setFamily(PShape.PATH);
@@ -71,18 +72,49 @@ class TrapMapTests {
 		bottom.beginShape();
 		bottom.vertex(0, 0);
 		bottom.vertex(100, 0);
-		bottom.vertex(150,50);
+		bottom.vertex(150, 50);
 		bottom.vertex(100, 100);
 		bottom.vertex(0, 100);
 		bottom.endShape(PConstants.CLOSE);
 
-		List<PShape> polygons = new ArrayList<>(Arrays.asList(top, bottom));
-		
+		final List<PShape> polygons = new ArrayList<>(Arrays.asList(top, bottom));
 		final TrapMap trapMap = new TrapMap(polygons);
-		
+
 		assertEquals(top, trapMap.findFace(50, -50));
 		assertEquals(bottom, trapMap.findFace(50, 50));
-		assertNull(trapMap.findFace(999, 999));
+		assertNull(trapMap.findFace(999, 999)); // test query point outside polygons
+		assertNull(trapMap.findFace(-0.00001f, 0)); // test query point outside polygons
+		assertEquals(5, trapMap.getAllTrapezoids().size());
+	}
+
+	@Test
+	void testPointLocationFromTriangles() {
+
+		// top and bottom share an vertical edge [(0,-50) -> (0,50)]
+
+		final PShape left = new PShape();
+		left.setFamily(PShape.PATH);
+		left.beginShape();
+		left.vertex(0, -50);
+		left.vertex(0, 50);
+		left.vertex(-50, 0);
+		left.endShape(PConstants.CLOSE);
+
+		final PShape right = new PShape();
+		right.setFamily(PShape.PATH);
+		right.beginShape();
+		right.vertex(0, -50);
+		right.vertex(0, 50);
+		right.vertex(50, 0);
+		right.endShape(PConstants.CLOSE);
+
+		final List<PShape> polygons = new ArrayList<>(Arrays.asList(left, right));
+		final TrapMap trapMap = new TrapMap(polygons);
+
+		assertEquals(left, trapMap.findFace(-25, 0));
+		assertEquals(right, trapMap.findFace(25, 0));
+		assertNull(trapMap.findFace(999, 999)); // test query point outside polygons
+		assertNull(trapMap.findFace(50.00001f, 0)); // test query point outside polygons
 	}
 
 }

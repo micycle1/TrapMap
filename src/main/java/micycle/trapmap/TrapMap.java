@@ -22,18 +22,35 @@ import processing.core.PVector;
  * segments may meet at endpoints (to allow closed figures) [PSLG?]. Both the
  * physical map and search structure are represented.
  *
- *
  * @author Tyler Chenhall (core algorithm)
  * @author Michael Carleton (improvements + Processing integration)
  */
 public class TrapMap {
 
-	// TODO HANDLE POINT INPUT FOR NEAREST NEIGHBOUR
-
 	private Node root; // root of trapezoid history graph
-	private List<Trapezoid> trapezoids; // all (leaf) trapezoids contained in the map 
+	private List<Trapezoid> trapezoids; // all (leaf) trapezoids contained in the map
+
+	private PVector leftBound, rightBound; // coordinates of bounding box: lower left & upper right corners
 
 	/**
+	 * Builds a trapezoidal map from the collection of segments. This constructor
+	 * builds both the physical map structure (creating the neighbor links for each
+	 * trapezoid) and also incrementally builds the map search structure (using
+	 * nodes in a pseudo-tree).
+	 *
+	 * @param segments The list of segments to build a search structure for /
+	 *                 segments that partition the plane into cells
+	 */
+	public TrapMap(Collection<Segment> segments) {
+		if (segments instanceof Set == false) {
+			// hashset to both remove possible duplicates & shuffle the collection
+			segments = new HashSet<>(segments);
+		}
+		process(segments);
+	}
+
+	/**
+	 * Builds a trapezoidal map from the collection of polygonal shapes.
 	 * 
 	 * @param polygons a list of disjoint polygonal shapes. Shapes may share edges /
 	 *                 touch (forming a 'Planar graph') but interiors cannot
@@ -69,23 +86,6 @@ public class TrapMap {
 		}
 
 		process(segments.values());
-	}
-
-	/**
-	 * Builds the trapezoidal map search structure from the collection of segments.
-	 * This constructor builds both the physical map structure (creating the
-	 * neighbor links for each trapezoid) and also incrementally builds the map
-	 * search structure (using nodes in a pseudo-tree).
-	 *
-	 * @param segments The list of segments to build a search structure for /
-	 *                 segments that partition the plane into cells
-	 */
-	public TrapMap(Collection<Segment> segments) {
-		if (segments instanceof Set == false) {
-			// hash to both remove possible duplicates & shuffle the collection
-			segments = new HashSet<>(segments);
-		}
-		process(segments);
 	}
 
 	private void process(Collection<Segment> segments) {
@@ -573,9 +573,9 @@ public class TrapMap {
 			}
 		}
 		// create a trapezoid using the bounding box
-		PVector left = new PVector(minx, miny);
-		PVector right = new PVector(maxx, maxy);
-		Trapezoid t = new Trapezoid(left, right, new Segment(new PVector(minx, maxy), new PVector(maxx, maxy)),
+		leftBound = new PVector(minx, miny);
+		rightBound = new PVector(maxx, maxy);
+		final Trapezoid t = new Trapezoid(leftBound, rightBound, new Segment(new PVector(minx, maxy), new PVector(maxx, maxy)),
 				new Segment(new PVector(minx, miny), new PVector(maxx, miny)));
 		return t;
 	}
@@ -611,8 +611,7 @@ public class TrapMap {
 	}
 
 	/**
-	 * Get the list of trapezoids in the current structure intersected by the
-	 * segment.
+	 * Finds trapezoids in the current structure intersected by the segment.
 	 *
 	 * @param s The query segment
 	 * @return An array of trapezoids (Leaf array) intersected by the segment
@@ -637,9 +636,9 @@ public class TrapMap {
 	}
 
 	/**
-	 * Find the trapezoid in the trapezoidal map which contains the search point.
+	 * Find the trapezoid in the trapezoidal map which contains the query point.
 	 *
-	 * @param p The PVector to search for
+	 * @param p The point to query
 	 * @return The trapezoid containing the query point
 	 */
 	private Leaf findPoint(PVector p, Segment s) {
@@ -664,12 +663,16 @@ public class TrapMap {
 	}
 
 	/**
-	 * Locates the trapezoid in which the given point resides.
+	 * Locates the trapezoid which contains the query point. If the point does not
+	 * lie inside any trapezoid, the nearest trapezoid to the point is returned.
 	 * 
-	 * @param p The PVector to query
-	 * @return The trapezoid containing the point
+	 * Same output as {@link #findContainingTrapezoid(PVector)} unless p lies
+	 * outside the bounding box.
+	 * 
+	 * @param p the query point
+	 * @return NEVER NULL
 	 */
-	public Trapezoid findTrapezoid(PVector p) {
+	public Trapezoid findNearestTrapezoid(PVector p) {
 		Node current = root;
 		while (!(current instanceof Leaf)) {
 			if (current instanceof XNode) { // point query: does p lie to the left or the right of a given point?
@@ -691,6 +694,20 @@ public class TrapMap {
 	}
 
 	/**
+	 * Locates the trapezoid which contains the query point. If the point does not
+	 * lie inside any trapezoid, null is returned.
+	 * 
+	 * @param p the query point
+	 * @return The trapezoid containing the point. MAY BE NULL
+	 */
+	public Trapezoid findContainingTrapezoid(PVector p) {
+		if ((p.x < leftBound.x || p.x > rightBound.x || p.y < leftBound.y || p.y > rightBound.y)) {
+			return null;
+		}
+		return findNearestTrapezoid(p);
+	}
+
+	/**
 	 * Locates all the trapezoids belonging to the polygon in which the given point
 	 * resides.
 	 * 
@@ -699,7 +716,7 @@ public class TrapMap {
 	 */
 	public Set<Trapezoid> findTrapezoids(PVector p) {
 		Set<Trapezoid> set = new HashSet<>();
-		recursePolygon(findTrapezoid(p), set);
+		recursePolygon(findContainingTrapezoid(p), set);
 		// TODO find way to map group back to original polygons, then map single
 		// MAP OF TRAPEZOID -> TRAPEZOID GROUP -> ORIGINAL FACE
 		// trapezoid -> original polygon.
@@ -707,8 +724,34 @@ public class TrapMap {
 
 	}
 
+	public Set<Trapezoid> findTrapezoids(float x, float y) {
+		return findTrapezoids(new PVector(x, y));
+	}
+
+	public List<Trapezoid> getAllTrapezoids() {
+		if (trapezoids == null) { // build lazily
+			final Set<Leaf> leaves = new HashSet<>();
+
+			recurseChildNodes(root, leaves);
+
+			trapezoids = new ArrayList<>(leaves.size());
+			leaves.forEach(l -> {
+				final Trapezoid t = l.getData();
+				// filter out point-like trapezoids (caused by axis-aligned segments)
+				if (!t.hasZeroWidth() && !t.hasZeroHeight()) {
+					trapezoids.add(t);
+				}
+			});
+		}
+		return trapezoids;
+	}
+
 	public PShape findFace(PVector p) {
-		return findTrapezoid(p).getFace();
+		return findContainingTrapezoid(p).getFace();
+	}
+
+	public PShape findFace(float x, float y) {
+		return findNearestTrapezoid(new PVector(x, y)).getFace();
 	}
 
 	private void recursePolygon(Trapezoid t, Set<Trapezoid> pp) {
@@ -773,25 +816,12 @@ public class TrapMap {
 		return isPointAboveLine(p, old);
 	}
 
-	public List<Trapezoid> getAllTrapezoids() {
-		if (trapezoids == null) { // build lazily
-			final Set<Leaf> leaves = new HashSet<>();
-			
-			recurseChildNodes(root, leaves);
-			
-			trapezoids = new ArrayList<>(leaves.size());
-			leaves.forEach(l -> trapezoids.add(l.getData()));
-		}
-		return trapezoids;
-	}
-	
 	private static void recurseChildNodes(Node n, Set<Leaf> leaves) {
 		if (!leaves.contains(n)) {
 			if (n instanceof Leaf == false) {
 				recurseChildNodes(n.getLeftChildNode(), leaves);
 				recurseChildNodes(n.getRightChildNode(), leaves);
-			}
-			else {
+			} else {
 				leaves.add((Leaf) n);
 			}
 		}

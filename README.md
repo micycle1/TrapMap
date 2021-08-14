@@ -8,7 +8,7 @@ Trapezoidal Map from a set of non-intersecting lines (a *planar straight-line gr
 
 A demonstration of the Randomized Trapezoidal Map for Point Search.
 
-The expected query time for an arbitrary but fixed query point is O(log n)
+The expected query time for an query point is *O(log n)*.
 
 Given a partition of the space into disjoint regions, to determine the region where a query point lies.
 
@@ -22,6 +22,22 @@ The arrangement faces are decomposed into simpler cells each of constant complex
 
 ## Project Description
 This repository demonstrates the Randomized Trapezoidal Map, as described in de Berg's Computational Geometry textbook. The project shuffles the segment list and builds a trapezoidal map (in order to achieve expected construction and query times of O(nlog(n)) and O(log(n)), respectively, where n is the number of segments.
+
+## Usage
+
+* `findTrapezoid()` find the trapezoid containing the query point.
+* `findTrapezoids()` finds the trapezoids which constitute the polygonal face in which the query point lies.
+  * This face is "emergent" from the line segments, depending on their intersection.
+
+Note: Handles vertical lines.
+
+
+
+### From line segments
+
+### From polygonal shapes
+
+Notably, trapezoids have a pointer back to the original, acessible via `findFace()`.
 
 ## Degenerate
 

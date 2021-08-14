@@ -256,6 +256,19 @@ public final class Trapezoid {
 		return leftP.x == rightP.x;
 	}
 
+	boolean hasZeroHeight() {
+		return leftP.y == rightP.y;
+	}
+
+	@Override
+	public String toString() {
+		final PVector tl = topSeg.intersect(leftP.x);
+		final PVector tr = topSeg.intersect(rightP.x);
+		final PVector bl = botSeg.intersect(leftP.x);
+		final PVector br = botSeg.intersect(rightP.x);
+		return String.join(", ", tl.toString(), tr.toString(), br.toString(), bl.toString());
+	}
+
 	@Override
 	/**
 	 * Two trapezoids are equal iff they have the same bounding segments
