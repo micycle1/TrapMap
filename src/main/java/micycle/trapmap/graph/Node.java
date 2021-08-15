@@ -17,7 +17,7 @@ public abstract class Node {
 	private Node rightChild = null;
 	private List<Node> parents;
 
-	public Node() {
+	protected Node() {
 		parents = new ArrayList<>(2);
 	}
 

@@ -121,7 +121,7 @@ public class Segment {
 	 */
 	PVector intersect(float x) {
 		if (lPoint.x != rPoint.x) {
-			float ysum = ((x - lPoint.x)) * (rPoint.y) + ((rPoint.x - x)) * (lPoint.y);
+			float ysum = (x - lPoint.x) * (rPoint.y) + (rPoint.x - x) * (lPoint.y);
 			float yval = ysum / (rPoint.x - lPoint.x);
 			return new PVector(x, yval);
 		} else {
@@ -203,7 +203,7 @@ public class Segment {
 
 	@Override
 	public boolean equals(Object s) {
-		if (!(s instanceof Segment) || s == null) {
+		if (!(s instanceof Segment)) {
 			return false;
 		}
 		Segment ss = (Segment) s;

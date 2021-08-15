@@ -21,10 +21,10 @@ public final class Trapezoid {
 
 	// Neighbors of this trapezoid
 	// Two trapezoids are neighbors if they share a vertical edge
-	private Trapezoid uleft_neighbor;
-	private Trapezoid lleft_neighbor;
-	private Trapezoid uright_neighbor;
-	private Trapezoid lright_neighbor;
+	private Trapezoid neighborUL; // upper left
+	private Trapezoid neighborLL; // lower left
+	private Trapezoid neighborUR; // upper right
+	private Trapezoid neighborLR; // lower right
 	private Leaf owner;
 
 	// variables describing the trapezoid shape
@@ -61,10 +61,10 @@ public final class Trapezoid {
 		topSeg = top;
 		botSeg = bottom;
 
-		uleft_neighbor = null;
-		lleft_neighbor = null;
-		uright_neighbor = null;
-		lright_neighbor = null;
+		neighborUL = null;
+		neighborLL = null;
+		neighborUR = null;
+		neighborLR = null;
 		owner = null;
 	}
 
@@ -111,7 +111,7 @@ public final class Trapezoid {
 	 * @return The lower left neighbor (possibly null)
 	 */
 	public Trapezoid getLowerLeftNeighbor() {
-		return lleft_neighbor;
+		return neighborLL;
 	}
 
 	/**
@@ -121,31 +121,31 @@ public final class Trapezoid {
 	 * @return the upper left neighbor trapezoid (possibly null)
 	 */
 	public Trapezoid getUpperLeftNeighbor() {
-		return uleft_neighbor;
+		return neighborUL;
 	}
 
 	public Trapezoid getLowerRightNeighbor() {
-		return lright_neighbor;
+		return neighborLR;
 	}
 
 	public Trapezoid getUpperRightNeighbor() {
-		return uright_neighbor;
+		return neighborUR;
 	}
 
 	void setLowerLeftNeighbor(Trapezoid t) {
-		lleft_neighbor = t;
+		neighborLL = t;
 	}
 
 	void setUpperLeftNeighbor(Trapezoid t) {
-		uleft_neighbor = t;
+		neighborUL = t;
 	}
 
 	void setLowerRightNeighbor(Trapezoid t) {
-		lright_neighbor = t;
+		neighborLR = t;
 	}
 
 	void setUpperRightNeighbor(Trapezoid t) {
-		uright_neighbor = t;
+		neighborUR = t;
 	}
 
 	/**
@@ -274,7 +274,7 @@ public final class Trapezoid {
 	 * Two trapezoids are equal iff they have the same bounding segments
 	 */
 	public boolean equals(Object t) {
-		if (t == null || !(t instanceof Trapezoid)) {
+		if (!(t instanceof Trapezoid)) {
 			return false;
 		}
 		Trapezoid tt = (Trapezoid) t;

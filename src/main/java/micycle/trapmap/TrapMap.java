@@ -42,8 +42,11 @@ public class TrapMap {
 	 *                 segments that partition the plane into cells
 	 */
 	public TrapMap(Collection<Segment> segments) {
-		if (segments instanceof Set == false) {
-			// hashset to both remove possible duplicates & shuffle the collection
+		if (!(segments instanceof Set)) {
+			/*
+			 * Into HashSet to both remove possible duplicates & shuffle the collection.
+			 * "Size of D and query time depend on insertion order".
+			 */
 			segments = new HashSet<>(segments);
 		}
 		process(segments);
@@ -95,27 +98,9 @@ public class TrapMap {
 		bounds.setLeaf(f);
 		root = f;
 
-		// 2. shuffle the segments // NOTE SKIPPING SHUFFLE
-		// "Size of D and query time depend on insertion order"
-		// the array is first duplicated in case the ordering is important in the
-		// original array
-//		Segment[] arr = Arrays.copyOf(segs, segs.length);
-//		Random r = new Random();
-//		int rnd;
-//		Segment temp;
-//		// random shuffling
-//		for (int i = arr.length - 1; i >= 1; i--) {
-//			// determine a random index to swap with (index < i) and swap
-//			// based on Chapter 4 of deBerg (p77)
-//			rnd = r.nextInt(i);
-//			temp = arr[i];
-//			arr[i] = arr[rnd];
-//			arr[rnd] = temp;
-//		}
-
 		Segment[] segs = segments.toArray(new Segment[segments.size()]); // relabel array
 
-		// 3. incrementally make the trapezoidal map
+		// 2. incrementally make the trapezoidal map
 		for (Segment seg : segs) {
 			// find the trapezoids intersected by arr[i]
 			Leaf[] list = followSegment(seg);
@@ -538,8 +523,6 @@ public class TrapMap {
 					yy.setRightChildNode(botLeaf[j]);
 
 					// insert the new structure in place of the old one
-					// Node parent = list[j].getParentNode();
-
 					// now there may be many parents...
 					List<Node> parents = list[j].getParentNodes();
 					for (Node parent : parents) {
@@ -575,9 +558,8 @@ public class TrapMap {
 		// create a trapezoid using the bounding box
 		leftBound = new PVector(minx, miny);
 		rightBound = new PVector(maxx, maxy);
-		final Trapezoid t = new Trapezoid(leftBound, rightBound, new Segment(new PVector(minx, maxy), new PVector(maxx, maxy)),
+		return new Trapezoid(leftBound, rightBound, new Segment(new PVector(minx, maxy), new PVector(maxx, maxy)),
 				new Segment(new PVector(minx, miny), new PVector(maxx, miny)));
-		return t;
 	}
 
 	/**
@@ -717,11 +699,7 @@ public class TrapMap {
 	public Set<Trapezoid> findTrapezoids(PVector p) {
 		Set<Trapezoid> set = new HashSet<>();
 		recursePolygon(findContainingTrapezoid(p), set);
-		// TODO find way to map group back to original polygons, then map single
-		// MAP OF TRAPEZOID -> TRAPEZOID GROUP -> ORIGINAL FACE
-		// trapezoid -> original polygon.
 		return set;
-
 	}
 
 	public Set<Trapezoid> findTrapezoids(float x, float y) {
@@ -793,12 +771,6 @@ public class TrapMap {
 	 */
 	private static boolean isPointAboveLine2(PVector p, Segment old, Segment pseg) {
 		// check if p is on segment old
-		/*
-		 * long x1 = p.x; long x2 = old.getLeftEndPoint().x; long x3 =
-		 * old.getRightEndPoint().x; long y1 = p.y; long y2 = old.getLeftEndPoint().y;
-		 * long y3 = old.getRightEndPoint().y; long result = (x2-x1)*(y3-y1) -
-		 * (x3-x1)*(y2-y1);
-		 */
 		// according to the textbook, p can only lie on segment old if it is the left
 		// endpoint
 		if (p.equals(old.getLeftPoint())) {
@@ -818,7 +790,7 @@ public class TrapMap {
 
 	private static void recurseChildNodes(Node n, Set<Leaf> leaves) {
 		if (!leaves.contains(n)) {
-			if (n instanceof Leaf == false) {
+			if (!(n instanceof Leaf)) {
 				recurseChildNodes(n.getLeftChildNode(), leaves);
 				recurseChildNodes(n.getRightChildNode(), leaves);
 			} else {
