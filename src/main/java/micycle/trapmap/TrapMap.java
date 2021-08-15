@@ -16,11 +16,13 @@ import processing.core.PShape;
 import processing.core.PVector;
 
 /**
- * This class represents the Trapezoidal Map for a given set of segments in the
- * plane. The constructor accepts a list of segments which follow the following
- * criteria: 1) Segments are non-crossing 2) Segment interiors are disjoint, but
- * segments may meet at endpoints (to allow closed figures) [PSLG?]. Both the
- * physical map and search structure are represented.
+ * TrapMap — a Trapezoidal Map library for fast point location queries.
+ * <p>
+ * TrapMap preprocesses a polygonal subdivision of the plane (given as
+ * individual line segments, or polygons) into a data structure (a map of
+ * trapezoids, which is navigable in a tree-like manner) such that it is
+ * possible to query which polygon contains a given query point in O(log n)
+ * time.
  *
  * @author Tyler Chenhall (core algorithm)
  * @author Michael Carleton (improvements + Processing integration)
@@ -33,10 +35,18 @@ public class TrapMap {
 	private PVector leftBound, rightBound; // coordinates of bounding box: lower left & upper right corners
 
 	/**
-	 * Builds a trapezoidal map from the collection of segments. This constructor
-	 * builds both the physical map structure (creating the neighbor links for each
-	 * trapezoid) and also incrementally builds the map search structure (using
-	 * nodes in a pseudo-tree).
+	 * Builds a trapezoidal map from a collection of segments.
+	 * <p>
+	 * The collection of segments should follow this criteria:
+	 * <ul>
+	 * <li>Segments are non-crossing</li>
+	 * <li>Segment interiors are disjoint, but segments may meet at endpoints (to
+	 * allow closed figures)</li>
+	 * </ul>
+	 * <p>
+	 * The map structure (a partitioning of the plane into neighboring trapezoids)
+	 * and the search structure (a directed graph) are both built upon object
+	 * construction.
 	 *
 	 * @param segments The list of segments to build a search structure for /
 	 *                 segments that partition the plane into cells
@@ -53,7 +63,18 @@ public class TrapMap {
 	}
 
 	/**
-	 * Builds a trapezoidal map from the collection of polygonal shapes.
+	 * Builds a trapezoidal map from a collection of polygonal shapes.
+	 * <p>
+	 * Shapes should not overlap, however they can share edges.
+	 * 
+	 * <p>
+	 * When a TrapMap is constructed from polygons, calling
+	 * {@link #findFace(PVector) findFace()} for a query point will return a
+	 * reference to the original PShape object in which the point is contained.
+	 * <p>
+	 * The map structure (a partitioning of the plane into neighboring trapezoids)
+	 * and the search structure (a directed graph) are both built upon object
+	 * construction.
 	 * 
 	 * @param polygons a list of disjoint polygonal shapes. Shapes may share edges /
 	 *                 touch (forming a 'Planar graph') but interiors cannot
@@ -100,7 +121,7 @@ public class TrapMap {
 
 		Segment[] segs = segments.toArray(new Segment[segments.size()]); // relabel array
 
-		// 2. incrementally make the trapezoidal map
+		// 2. Incrementally construct trapezoidal (using randomized segment set)
 		for (Segment seg : segs) {
 			// find the trapezoids intersected by arr[i]
 			Leaf[] list = followSegment(seg);
@@ -393,7 +414,6 @@ public class TrapMap {
 						if (topArr[j] != topArr[j + 1]) {
 							lowerLink(topArr[j], topArr[j + 1]);
 						}
-
 						Trapezoid temp2 = list[j].getData().getUpperRightNeighbor();
 						if (!list[j + 1].getData().equals(temp2)) {
 							upperLink(topArr[j], temp2);
@@ -403,7 +423,6 @@ public class TrapMap {
 						if (botArr[j] != botArr[j + 1]) {
 							upperLink(botArr[j], botArr[j + 1]);
 						}
-
 						temp2 = list[j].getData().getLowerRightNeighbor();
 						if (!list[j + 1].getData().equals(temp2)) {
 							lowerLink(botArr[j], temp2);
@@ -604,7 +623,7 @@ public class TrapMap {
 		// shift over leftward to make sure we have the first of any repeated trapezoids
 
 		list.add(previous);
-		while (compareTo(s.getRightPoint(), previous.getData().getRightBound()) > 0) {
+		while (compareTo(s.getRightPoint().x, s.getRightPoint().y, previous.getData().getRightBound()) > 0) {
 			// choose the next trapezoid in the sequence
 			if (TrapMap.isPointAboveLine(previous.getData().getRightBound(), s)) {
 				previous = previous.getData().getLowerRightNeighbor().getLeaf();
@@ -627,7 +646,7 @@ public class TrapMap {
 		Node current = root;
 		while (!(current instanceof Leaf)) {
 			if (current instanceof XNode) {
-				final int val = compareTo(p, ((XNode) current).getData());
+				final int val = compareTo(p.x, p.y, ((XNode) current).getData());
 				if (val < 0) {
 					current = current.getLeftChildNode();
 				} else {
@@ -647,18 +666,20 @@ public class TrapMap {
 	/**
 	 * Locates the trapezoid which contains the query point. If the point does not
 	 * lie inside any trapezoid, the nearest trapezoid to the point is returned.
-	 * 
-	 * Same output as {@link #findContainingTrapezoid(PVector)} unless p lies
-	 * outside the bounding box.
+	 * <p>
+	 * This method is identical to {@link #findContainingTrapezoid(double, double)
+	 * findContainingTrapezoid()}, except for the case where the point does not lie
+	 * inside any trapezoid.
 	 * 
 	 * @param p the query point
-	 * @return NEVER NULL
+	 * @return the trapezoid that contains the query point (or the nearest trapezoid
+	 *         if none contain the point)
 	 */
-	public Trapezoid findNearestTrapezoid(PVector p) {
+	public Trapezoid findNearestTrapezoid(double x, double y) {
 		Node current = root;
 		while (!(current instanceof Leaf)) {
 			if (current instanceof XNode) { // point query: does p lie to the left or the right of a given point?
-				final int val = compareTo(p, ((XNode) current).getData());
+				final int val = compareTo(x, y, ((XNode) current).getData());
 				if (val < 0) {
 					current = current.getLeftChildNode();
 				} else {
@@ -666,7 +687,7 @@ public class TrapMap {
 				}
 			} else // we are searching for a point, without segment information
 					// segment query: does p lie above or below a given line segment?
-			if (isPointAboveLine(p, ((YNode) current).getData())) {
+			if (isPointAboveLine(x, y, ((YNode) current).getData())) {
 				current = current.getLeftChildNode();
 			} else {
 				current = current.getRightChildNode();
@@ -678,15 +699,20 @@ public class TrapMap {
 	/**
 	 * Locates the trapezoid which contains the query point. If the point does not
 	 * lie inside any trapezoid, null is returned.
+	 * <p>
+	 * This method is identical to {@link #findNearestTrapezoid(double, double)
+	 * findNearestTrapezoid()}, except for the case where the point does not lie
+	 * inside any trapezoid.
 	 * 
 	 * @param p the query point
-	 * @return The trapezoid containing the point. MAY BE NULL
+	 * @return the trapezoid that contains the query point (or NULL if none contain
+	 *         the point)
 	 */
-	public Trapezoid findContainingTrapezoid(PVector p) {
-		if ((p.x < leftBound.x || p.x > rightBound.x || p.y < leftBound.y || p.y > rightBound.y)) {
+	public Trapezoid findContainingTrapezoid(double x, double y) {
+		if ((x < leftBound.x || x > rightBound.x || y < leftBound.y || y > rightBound.y)) {
 			return null;
 		}
-		return findNearestTrapezoid(p);
+		return findNearestTrapezoid(x, y);
 	}
 
 	/**
@@ -696,20 +722,21 @@ public class TrapMap {
 	 * @param p
 	 * @return
 	 */
-	public Set<Trapezoid> findTrapezoids(PVector p) {
+	public Set<Trapezoid> findTrapezoidGroup(double x, double y) {
 		Set<Trapezoid> set = new HashSet<>();
-		recursePolygon(findContainingTrapezoid(p), set);
+		recursePolygon(findContainingTrapezoid(x, y), set);
 		return set;
 	}
 
-	public Set<Trapezoid> findTrapezoids(float x, float y) {
-		return findTrapezoids(new PVector(x, y));
-	}
-
+	/**
+	 * Returns all the trapezoids contained in the trapezoid map (the trapezoids
+	 * that make up the polygonal subdivision of the plane).
+	 * 
+	 * @return list of all trapezoids
+	 */
 	public List<Trapezoid> getAllTrapezoids() {
 		if (trapezoids == null) { // build lazily
 			final Set<Leaf> leaves = new HashSet<>();
-
 			recurseChildNodes(root, leaves);
 
 			trapezoids = new ArrayList<>(leaves.size());
@@ -724,15 +751,11 @@ public class TrapMap {
 		return trapezoids;
 	}
 
-	public PShape findFace(PVector p) {
-		return findContainingTrapezoid(p).getFace();
+	public PShape findFace(double x, double y) {
+		return findNearestTrapezoid(x, y).getFace();
 	}
 
-	public PShape findFace(float x, float y) {
-		return findNearestTrapezoid(new PVector(x, y)).getFace();
-	}
-
-	private void recursePolygon(Trapezoid t, Set<Trapezoid> pp) {
+	private static void recursePolygon(Trapezoid t, Set<Trapezoid> pp) {
 		if (t != null && !pp.contains(t)) {
 			pp.add(t);
 			recursePolygon(t.getLowerLeftNeighbor(), pp);
@@ -742,23 +765,27 @@ public class TrapMap {
 		}
 	}
 
-	/**
-	 * Checks to see if a PVector is above the segment. Works by calculating y of
-	 * the segment at x of the point
-	 *
-	 * @param p The PVector of interest
-	 * @param s The segment of interest
-	 * @return True if on or above the segment; false otherwise
-	 */
 	private static boolean isPointAboveLine(PVector p, Segment s) {
-		float x = p.x;
-		float y = p.y;
+		return (p.x - s.getLeftPoint().x) * s.getRightPoint().y + (s.getRightPoint().x - p.x) * s.getLeftPoint().y < p.y
+				* (s.getRightPoint().x - s.getLeftPoint().x);
+	}
+
+	/**
+	 * Checks to see if a point is above the segment. Works by calculating y of the
+	 * segment at x of the point
+	 *
+	 * @param x x-coordinate of point of interest
+	 * @param y y-coordinate of point of interest
+	 * @param s The segment of interest
+	 * @return true if on or above the segment; false otherwise
+	 */
+	private static boolean isPointAboveLine(double x, double y, Segment s) {
 		return (x - s.getLeftPoint().x) * s.getRightPoint().y + (s.getRightPoint().x - x) * s.getLeftPoint().y < y
 				* (s.getRightPoint().x - s.getLeftPoint().x);
 	}
 
 	/**
-	 * Checks if the input PVector on the given old segment lies above or below the
+	 * Checks if the input point on the given old segment lies above or below the
 	 * new segment. If the input PVector lies on the new segment, we determine
 	 * above/below by which segment has the higher slope.
 	 * 
@@ -766,8 +793,8 @@ public class TrapMap {
 	 * @param p    The PVector under consideration
 	 * @param old  The segment which the PVector lies on
 	 * @param pseg The segment to compare the PVector to
-	 * @return True if the PVector lies above segment pseg, or the PVector lies on
-	 *         pseg, on a segment of higher slope
+	 * @return true if the point lies above segment pseg, or the point lies on pseg,
+	 *         on a segment of higher slope
 	 */
 	private static boolean isPointAboveLine2(PVector p, Segment old, Segment pseg) {
 		// check if p is on segment old
@@ -797,14 +824,13 @@ public class TrapMap {
 				leaves.add((Leaf) n);
 			}
 		}
-
 	}
 
-	private static int compareTo(PVector a, PVector b) {
+	private static int compareTo(double x, double y, PVector b) {
 		// Handle degeneracies by using comparison rules to mimic x-coordinate shearing
-		if (a.x < b.x || (a.x == b.x && a.y < b.y)) {
+		if (x < b.x || (x == b.x && y < b.y)) {
 			return -1;
-		} else if ((a.x == b.x) && (a.y == b.y)) {
+		} else if ((x == b.x) && (y == b.y)) {
 			return 0;
 		} else {
 			return 1;

@@ -36,17 +36,17 @@ class TrapMapTests {
 		final TrapMap trapMap = new TrapMap(segments);
 
 		// smaller box region
-		Set<Trapezoid> t1 = trapMap.findTrapezoids(26.1f, 26.2f);
-		Set<Trapezoid> t2 = trapMap.findTrapezoids(30, 30);
-		Set<Trapezoid> t3 = trapMap.findTrapezoids(60, 60);
+		Set<Trapezoid> t1 = trapMap.findTrapezoidGroup(26.1, 26.2);
+		Set<Trapezoid> t2 = trapMap.findTrapezoidGroup(30, 30);
+		Set<Trapezoid> t3 = trapMap.findTrapezoidGroup(60, 60);
 		assertEquals(true, t1.equals(t2));
 		assertEquals(true, t2.equals(t3));
-		assertEquals(0, trapMap.findTrapezoids(999, 999).size());
+		assertEquals(0, trapMap.findTrapezoidGroup(999, 999).size());
 
 		// larger box region
-		Set<Trapezoid> t4 = trapMap.findTrapezoids(20.1f, 20.1f);
-		Set<Trapezoid> t5 = trapMap.findTrapezoids(50, 90);
-		Set<Trapezoid> t6 = trapMap.findTrapezoids(80, 80);
+		Set<Trapezoid> t4 = trapMap.findTrapezoidGroup(20.1, 20.1);
+		Set<Trapezoid> t5 = trapMap.findTrapezoidGroup(50, 90);
+		Set<Trapezoid> t6 = trapMap.findTrapezoidGroup(80, 80);
 		assertEquals(true, t4.equals(t5));
 		assertEquals(true, t5.equals(t6));
 
@@ -114,7 +114,7 @@ class TrapMapTests {
 		assertEquals(left, trapMap.findFace(-25, 0));
 		assertEquals(right, trapMap.findFace(25, 0));
 		assertNull(trapMap.findFace(999, 999)); // test query point outside polygons
-		assertNull(trapMap.findFace(50.00001f, 0)); // test query point outside polygons
+		assertNull(trapMap.findFace(50.00001, 0)); // test query point outside polygons
 	}
 
 }
