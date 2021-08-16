@@ -36,7 +36,7 @@ public class TrapMap {
 	private PVector leftBound, rightBound; // coordinates of bounding box: lower left & upper right corners
 
 	/**
-	 * Builds a trapezoidal map from a collection of segments (or a planar
+	 * Builds a trapezoidal map from a collection of line segments (or a planar
 	 * straight-line graph).
 	 * <p>
 	 * The collection of segments should follow this criteria:
@@ -48,7 +48,9 @@ public class TrapMap {
 	 * <p>
 	 * The map structure (a partitioning of the plane into neighboring trapezoids)
 	 * and the search structure (a directed graph) are both built upon object
-	 * construction.
+	 * construction. Use {@link #findFaceTrapezoids(double, double)
+	 * findFaceTrapezoids()} with this constructor to find the the group of
+	 * trapezoids that make a single face.
 	 *
 	 * @param segments a list of line segments from which to build a trapezoidal map
 	 */
@@ -83,7 +85,7 @@ public class TrapMap {
 	 *                 (mesh-like, at most (if share edges)
 	 */
 	public TrapMap(List<PShape> polygons) {
-		final Map<Integer, Segment> segments = new HashMap<>(polygons.size() * 3);
+		final Map<Segment, Segment> segments = new HashMap<>(polygons.size() * 3);
 		for (PShape polygon : polygons) {
 			if (polygon.getFamily() == PShape.PRIMITIVE || polygon.getFamily() == PShape.GROUP) {
 				continue; // process polygonal shapes only
@@ -101,8 +103,8 @@ public class TrapMap {
 					}
 				}
 
-				if (segments.putIfAbsent(s.hashCode(), s) != null) {
-					final Segment other = segments.get(s.hashCode());
+				if (segments.putIfAbsent(s, s) != null) {
+					final Segment other = segments.get(s);
 					if (other.faceA != polygon) { // this should never be false
 						other.faceB = polygon; // link the polygon twinned with this edge
 					}
@@ -719,25 +721,32 @@ public class TrapMap {
 	}
 
 	/**
-	 * Locates all the trapezoids belonging to the polygon in which the given point
-	 * resides.
+	 * Finds the group of trapezoids that make up the face that contains the query
+	 * point.
+	 * <p>
+	 * Use this method to find faces that emerge from the plane when it is
+	 * paritioned using line segments (when the TrapMap has been constructed from
+	 * line segments).
 	 * 
 	 * @param x x-coordinate of query point
 	 * @param y y-coordinate of query point
-	 * @return
+	 * @return a set of faces that make up the face that contains the query point.
+	 *         The set is empty when the point is not contained in any face.
 	 */
-	public Set<Trapezoid> findTrapezoidGroup(double x, double y) {
+	public Set<Trapezoid> findFaceTrapezoids(double x, double y) {
 		Set<Trapezoid> set = new HashSet<>();
 		recursePolygon(findContainingTrapezoid(x, y), set);
 		return set;
 	}
 
 	/**
-	 * Locates the polygon which contains the query point. This method returns a
-	 * reference if the {@link #TrapMap(List) TrapMap(List<PShape>)} constructor was
-	 * used. If the TrapMap was constructed from line segments, this method will
-	 * always return null; use {@link #findTrapezoidGroup(double, double)
-	 * findTrapezoid()} instead.
+	 * Locates the polygon which contains the query point.
+	 * <p>
+	 * This method returns a reference to one of the polygons provided to the
+	 * {@link #TrapMap(List) TrapMap(List<<PShape>>)} constructor (if this
+	 * constructor was used); if the TrapMap was constructed from line segments,
+	 * this method will always return null — use
+	 * {@link #findFaceTrapezoids(double, double) findFaceTrapezoids()} instead.
 	 * 
 	 * @param x x-coordinate of query point
 	 * @param y y-coordinate of query point
@@ -749,8 +758,7 @@ public class TrapMap {
 	}
 
 	/**
-	 * Returns all the trapezoids contained in the trapezoid map (the trapezoids
-	 * that make up the polygonal subdivision of the plane).
+	 * Returns all the trapezoids contained in the trapezoid map.
 	 * 
 	 * @return list of all trapezoids
 	 */
@@ -805,7 +813,6 @@ public class TrapMap {
 	 * new segment. If the input PVector lies on the new segment, we determine
 	 * above/below by which segment has the higher slope.
 	 * 
-	 * @TODO Check this for nondegenerate case?
 	 * @param p    The PVector under consideration
 	 * @param old  The segment which the PVector lies on
 	 * @param pseg The segment to compare the PVector to

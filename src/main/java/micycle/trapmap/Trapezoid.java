@@ -277,7 +277,7 @@ public final class Trapezoid {
 		if (!(t instanceof Trapezoid)) {
 			return false;
 		}
-		Trapezoid tt = (Trapezoid) t;
-		return (this.topSeg == tt.topSeg) && (this.botSeg == tt.botSeg);
+		final Trapezoid tt = (Trapezoid) t;
+		return (this.topSeg.equals(tt.topSeg) && this.botSeg.equals(tt.botSeg));
 	}
 }
