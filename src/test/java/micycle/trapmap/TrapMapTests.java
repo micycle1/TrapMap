@@ -115,11 +115,12 @@ class TrapMapTests {
 		assertNull(trapMap.findContainingPolygon(999, 999)); // test query point outside polygons
 		assertNull(trapMap.findContainingPolygon(50.00001, 0)); // test query point outside polygons
 	}
-	
+
 	@Test
 	void segmentHashCodeTest() {
-		assertNotEquals(new Segment(1,0,0,0).hashCode(), new Segment(0, 0, 1, 0));
-		assertNotEquals(new Segment(1,2,3,4).hashCode(), new Segment(2, 1, 4, 3));
+		assertNotEquals(new Segment(1, 0, 0, 0).hashCode(), new Segment(0, 0, 1, 0));
+		assertNotEquals(new Segment(1, 2, 3, 4).hashCode(), new Segment(2, 1, 4, 3));
+		assertNotEquals(new Segment(-1, -2, -3, -4).hashCode(), new Segment(1, 2, 3, 4));
 	}
 
 }

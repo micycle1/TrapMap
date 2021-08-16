@@ -4,9 +4,9 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>micycle.trapmap</groupId>
 	<artifactId>trapmap</artifactId>
-	<version>1.0-SNAPSHOT</version>
+	<version>1.0</version>
 	<name>TrapMap</name>
-	<description>Trapezoidal Map library: a data structure for fast point location queries.</description>
+	<description>Trapezoidal Map library — a data structure for fast point location queries.</description>
 
 	<properties>
 		<sonar.organization>micycle</sonar.organization>
@@ -89,6 +89,5 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-
 
 </project>

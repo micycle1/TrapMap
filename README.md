@@ -16,7 +16,7 @@ The problem of planar partitioning and planar point location is a fundamental pr
 
 ## Usage
 
-*TrapMap* is available as a Maven artifact via Jitpack.
+*TrapMap* is available as a Maven artifact via [Jitpack](https://jitpack.io/#micycle1/TrapMap).
 
 Construct a `TrapMap` from a collection of line segments or a list of `PShape` polygons. The trapezoidal map and the search structure are built upon instantiation. It can then be queried as follows:
 

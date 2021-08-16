@@ -270,6 +270,11 @@ public final class Trapezoid {
 	}
 
 	@Override
+	public int hashCode() {
+		return (topSeg.hashCode()) ^ botSeg.hashCode() ^ leftP.hashCode() ^ rightP.hashCode();
+	}
+
+	@Override
 	/**
 	 * Two trapezoids are equal iff they have the same bounding segments
 	 */
