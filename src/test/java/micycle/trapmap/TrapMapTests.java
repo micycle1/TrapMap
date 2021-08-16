@@ -80,10 +80,10 @@ class TrapMapTests {
 		final List<PShape> polygons = new ArrayList<>(Arrays.asList(top, bottom));
 		final TrapMap trapMap = new TrapMap(polygons);
 
-		assertEquals(top, trapMap.findFace(50, -50));
-		assertEquals(bottom, trapMap.findFace(50, 50));
-		assertNull(trapMap.findFace(999, 999)); // test query point outside polygons
-		assertNull(trapMap.findFace(-0.00001f, 0)); // test query point outside polygons
+		assertEquals(top, trapMap.findContainingPolygon(50, -50));
+		assertEquals(bottom, trapMap.findContainingPolygon(50, 50));
+		assertNull(trapMap.findContainingPolygon(999, 999)); // test query point outside polygons
+		assertNull(trapMap.findContainingPolygon(-0.00001f, 0)); // test query point outside polygons
 		assertEquals(5, trapMap.getAllTrapezoids().size());
 	}
 
@@ -111,10 +111,10 @@ class TrapMapTests {
 		final List<PShape> polygons = new ArrayList<>(Arrays.asList(left, right));
 		final TrapMap trapMap = new TrapMap(polygons);
 
-		assertEquals(left, trapMap.findFace(-25, 0));
-		assertEquals(right, trapMap.findFace(25, 0));
-		assertNull(trapMap.findFace(999, 999)); // test query point outside polygons
-		assertNull(trapMap.findFace(50.00001, 0)); // test query point outside polygons
+		assertEquals(left, trapMap.findContainingPolygon(-25, 0));
+		assertEquals(right, trapMap.findContainingPolygon(25, 0));
+		assertNull(trapMap.findContainingPolygon(999, 999)); // test query point outside polygons
+		assertNull(trapMap.findContainingPolygon(50.00001, 0)); // test query point outside polygons
 	}
 
 }

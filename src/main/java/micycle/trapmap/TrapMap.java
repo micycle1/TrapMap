@@ -18,14 +18,15 @@ import processing.core.PVector;
 /**
  * TrapMap — a Trapezoidal Map library for fast point location queries.
  * <p>
- * TrapMap preprocesses a polygonal subdivision of the plane (given as
- * individual line segments, or polygons) into a data structure (a map of
- * trapezoids, which is navigable in a tree-like manner) such that it is
- * possible to query which polygon contains a given query point in O(log n)
- * time.
+ * TrapMap pre-processes a partitioning of the plane (given as individual line
+ * segments, or polygons), decomposing regions into simpler trapezoidal cells
+ * upon which a search structure (a directed acyclic graph) is constructed. This
+ * structure facilitates the search of the trapezoid (hence the region)
+ * containing a query point in O(log n) time. The trapezoidal map and the search
+ * structure are built via randomized incremental construction.
  *
  * @author Tyler Chenhall (core algorithm)
- * @author Michael Carleton (improvements + Processing integration)
+ * @author Michael Carleton (improvements)
  */
 public class TrapMap {
 
@@ -35,7 +36,8 @@ public class TrapMap {
 	private PVector leftBound, rightBound; // coordinates of bounding box: lower left & upper right corners
 
 	/**
-	 * Builds a trapezoidal map from a collection of segments.
+	 * Builds a trapezoidal map from a collection of segments (or a planar
+	 * straight-line graph).
 	 * <p>
 	 * The collection of segments should follow this criteria:
 	 * <ul>
@@ -48,14 +50,13 @@ public class TrapMap {
 	 * and the search structure (a directed graph) are both built upon object
 	 * construction.
 	 *
-	 * @param segments The list of segments to build a search structure for /
-	 *                 segments that partition the plane into cells
+	 * @param segments a list of line segments from which to build a trapezoidal map
 	 */
 	public TrapMap(Collection<Segment> segments) {
 		if (!(segments instanceof Set)) {
 			/*
-			 * Into HashSet to both remove possible duplicates & shuffle the collection.
-			 * "Size of D and query time depend on insertion order".
+			 * Create as HashSet to both remove possible duplicates & shuffle the
+			 * collection. "Size of D and query time depend on insertion order".
 			 */
 			segments = new HashSet<>(segments);
 		}
@@ -671,7 +672,8 @@ public class TrapMap {
 	 * findContainingTrapezoid()}, except for the case where the point does not lie
 	 * inside any trapezoid.
 	 * 
-	 * @param p the query point
+	 * @param x x-coordinate of query point
+	 * @param y y-coordinate of query point
 	 * @return the trapezoid that contains the query point (or the nearest trapezoid
 	 *         if none contain the point)
 	 */
@@ -704,7 +706,8 @@ public class TrapMap {
 	 * findNearestTrapezoid()}, except for the case where the point does not lie
 	 * inside any trapezoid.
 	 * 
-	 * @param p the query point
+	 * @param x x-coordinate of query point
+	 * @param y y-coordinate of query point
 	 * @return the trapezoid that contains the query point (or NULL if none contain
 	 *         the point)
 	 */
@@ -719,13 +722,30 @@ public class TrapMap {
 	 * Locates all the trapezoids belonging to the polygon in which the given point
 	 * resides.
 	 * 
-	 * @param p
+	 * @param x x-coordinate of query point
+	 * @param y y-coordinate of query point
 	 * @return
 	 */
 	public Set<Trapezoid> findTrapezoidGroup(double x, double y) {
 		Set<Trapezoid> set = new HashSet<>();
 		recursePolygon(findContainingTrapezoid(x, y), set);
 		return set;
+	}
+
+	/**
+	 * Locates the polygon which contains the query point. This method returns a
+	 * reference if the {@link #TrapMap(List) TrapMap(List<PShape>)} constructor was
+	 * used. If the TrapMap was constructed from line segments, this method will
+	 * always return null; use {@link #findTrapezoidGroup(double, double)
+	 * findTrapezoid()} instead.
+	 * 
+	 * @param x x-coordinate of query point
+	 * @param y y-coordinate of query point
+	 * @return polygon which contains the query point; otherwise null if no polygon
+	 *         contains the point
+	 */
+	public PShape findContainingPolygon(double x, double y) {
+		return findNearestTrapezoid(x, y).getFace();
 	}
 
 	/**
@@ -749,10 +769,6 @@ public class TrapMap {
 			});
 		}
 		return trapezoids;
-	}
-
-	public PShape findFace(double x, double y) {
-		return findNearestTrapezoid(x, y).getFace();
 	}
 
 	private static void recursePolygon(Trapezoid t, Set<Trapezoid> pp) {

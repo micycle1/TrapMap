@@ -1,27 +1,17 @@
-[![](https://jitpack.io/v/micycle1/TrapezoidalMap.svg)](https://jitpack.io/#micycle1/TrapezoidalMap)
+[![](https://jitpack.io/v/micycle1/TrapezoidalMap.svg)](https://jitpack.io/#micycle1/TrapezoidalMap) [![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=micycle1_TrapMap&metric=ncloc)](https://sonarcloud.io/dashboard?id=micycle1_TrapMap)
+
 
 # TrapMap
 
-A Trapezoidal Map library; a data structure for fast point location queries.
+*Trapezoidal Map* library — a data structure for fast point location queries.
 
-Trapezoidal Map from a set of non-intersecting lines (a *planar straight-line graph*)
+## Overview
 
-A demonstration of the Randomized Trapezoidal Map for Point Search.
+The problem of planar partitioning and planar point location is a fundamental problem in computational geometry. Given a partition of the plane into disjoint regions, we may want to determine in which region a query point lies.
 
-The expected query time for an query point is *O(log n)*.
+*TrapMap* pre-processes a partitioning of the plane (given as individual line segments, or polygons), decomposing regions into simpler trapezoidal cells upon which a search structure (a directed acyclic graph) is constructed. This structure facilitates the search of the trapezoid (hence the region) containing a query point in *O(log n)* time. The trapezoidal map and the search structure are built via randomized incremental construction.
 
-Given a partition of the space into disjoint regions, to determine the region where a query point lies.
-
-A point location query is to ask in which region (face) of a map a given point lie.
-
-arbitrary polygons (not just triangles for example)
-
-The algorithm has been extracted from AWT Tyler Chenhall's Java [applet](https://github.com/TylerChenhall/TrapezoidalMap) and turned into this usable library.
-
-The arrangement faces are decomposed into simpler cells each of constant complexity, known as pseudo-trapezoids, and a search structure (a directed acyclic graph) is constructed on top of these cells, facilitating the search of the pseudo trapezoid (hence the arrangement cell) containing a query point in expected logarithmic time. The trapezoidal map and the search structure are built by a randomized incremental construction algorithm (RIC).
-
-## Project Description
-This repository demonstrates the Randomized Trapezoidal Map, as described in de Berg's Computational Geometry textbook. The project shuffles the segment list and builds a trapezoidal map (in order to achieve expected construction and query times of O(nlog(n)) and O(log(n)), respectively, where n is the number of segments.
+*TrapMap* is based on _Tyler Chenhall's_ trapezoidal map [implementation](https://github.com/TylerChenhall/TrapezoidalMap). It has been built for interoperability with [Processing](https://processing.org/) so results can be visualised quickly.
 
 ## Usage
 
@@ -31,24 +21,13 @@ This repository demonstrates the Randomized Trapezoidal Map, as described in de 
 
 Note: Handles vertical lines.
 
+Illustrating the containing the trapezoid and the containing polygon face.
 
+<p float="middle">
+  <a href="examples/partitionSmooth"><img src="resources/leaf.gif" width="50%"/></a <a href="examples/partitionSmooth"><img src="resources/dino.gif" width="50%"/></a>
+</p>
 
 ### From line segments
 
 ### From polygonal shapes
-
-Notably, trapezoids have a pointer back to the original, acessible via `findFace()`.
-
-## Degenerate
-
-In degenerate situations the query point can lie on an edge, or coincide with a vertex???
-Vertical line???
-
-
-## Resources
-
-[Here](http://cgm.cs.mcgill.ca/~athens/cs507/Projects/2002/JukkaKaartinen/)
-
-or 
-
-[here](http://janrollmann.de/projects/thesis/)
+Notably, trapezoids have a pointer back to the original, accessible via `findFace()`.
