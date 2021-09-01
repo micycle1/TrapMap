@@ -1,5 +1,8 @@
 package micycle.trapmap;
 
+import java.util.Arrays;
+import java.util.List;
+
 import micycle.trapmap.graph.Leaf;
 import processing.core.PConstants;
 import processing.core.PShape;
@@ -33,6 +36,7 @@ public final class Trapezoid {
 	private Segment topSeg;
 	private Segment botSeg;
 	private PShape poly; // polygonal representation of trapezoid
+	private List<PVector> polyVertices;
 
 	/**
 	 * Boolean flag that indicates whether the mapping to the polygonal face this
@@ -183,7 +187,7 @@ public final class Trapezoid {
 			 * trapezoid lies can be computed by first retrieving the enclosing segments,
 			 * and then finding the face that is shared by two of these segments (this is
 			 * the face that is properly enclosed by the trapezoid's top and bottom
-			 * segments).
+			 * segments). NOTE doesn't always work on very concave shapes.
 			 */
 			if (f1 != null) {
 				if (f1 == f2 || f1 == f3 || f1 == f4) {
@@ -224,6 +228,19 @@ public final class Trapezoid {
 	}
 
 	/**
+	 * Gets the four coordinates that make up this trapezoid (from top left
+	 * clockwise).
+	 * 
+	 * @return
+	 */
+	public List<PVector> getBoundaryVertices() {
+		if (poly == null) {
+			poly = getPrivateBoundaryPolygon(leftP, rightP, topSeg, botSeg);
+		}
+		return polyVertices;
+	}
+
+	/**
 	 * Returns the boundary of the trapezoid as a Polygon object for easy display.
 	 *
 	 * @return The polygon object representing the boundary of the Trapezoid
@@ -233,6 +250,7 @@ public final class Trapezoid {
 		final PVector tr = top.intersect(right.x);
 		final PVector bl = bottom.intersect(left.x);
 		final PVector br = bottom.intersect(right.x);
+		polyVertices = Arrays.asList(tl, tr, br, bl);
 
 		final PShape polygon = new PShape();
 		polygon.setFamily(PShape.PATH);
