@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>micycle.trapmap</groupId>
 	<artifactId>trapmap</artifactId>
-	<version>1.0.1-SNAPSHOT</version>
+	<version>1.0.1</version>
 	<name>TrapMap</name>
 	<description>Trapezoidal Map library — a data structure for fast point location queries.</description>
 
@@ -57,9 +57,8 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.22.2</version>
+				<version>3.5.4</version>
 			</plugin>
-
 		</plugins>
 	</build>
 

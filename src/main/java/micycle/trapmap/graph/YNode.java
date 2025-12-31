@@ -4,7 +4,7 @@ import micycle.trapmap.Segment;
 
 /**
  * A y-node stores a segment.
- * 
+ *
  * @author Tyler Chenhall
  */
 public class YNode extends Node {
@@ -18,7 +18,7 @@ public class YNode extends Node {
 
 	/**
 	 * Return the segment data held by this Node
-	 * 
+	 *
 	 * @return the segment data
 	 */
 	public Segment getData() {

@@ -4,7 +4,7 @@ import micycle.trapmap.Trapezoid;
 
 /**
  * Leafs model trapezoids at the lowest level of the History Graph.
- * 
+ *
  * @author Tyler Chenhall
  */
 public class Leaf extends Node {
@@ -18,7 +18,7 @@ public class Leaf extends Node {
 
 	/**
 	 * Return the trapezoid stored by this Leaf
-	 * 
+	 *
 	 * @return The trapezoid
 	 */
 	public Trapezoid getData() {

@@ -32,7 +32,7 @@ public class Segment {
 	/**
 	 * Constructs a segment with reference to the polygonal face whose member is the
 	 * segment.
-	 * 
+	 *
 	 * @param one
 	 * @param two
 	 * @param face
@@ -193,8 +193,8 @@ public class Segment {
 			double b11 = this.lPoint.y - this.lPoint.x * slope2;
 			double b12 = this.rPoint.y - this.rPoint.x * slope2;
 			if (((b01 <= b00 && b00 <= b02) || (b01 >= b00 && b00 >= b02)) && ((b11 <= b10 && b10 <= b12) || b11 >= b10 && b10 >= b12)) {
-				return this.equals(other) || !(this.lPoint.equals(other.lPoint) || this.lPoint.equals(other.rPoint)
-						|| this.rPoint.equals(other.lPoint) || this.rPoint.equals(other.rPoint));
+				return this.equals(other) || !(this.lPoint.equals(other.lPoint) || this.lPoint.equals(other.rPoint) || this.rPoint.equals(other.lPoint)
+						|| this.rPoint.equals(other.rPoint));
 
 			}
 		}
