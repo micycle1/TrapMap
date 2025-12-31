@@ -1,5 +1,4 @@
 [![](https://jitpack.io/v/micycle1/TrapMap.svg)](https://jitpack.io/#micycle1/TrapMap)
- [![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=micycle1_TrapMap&metric=ncloc)](https://sonarcloud.io/dashboard?id=micycle1_TrapMap)
 
 
 # TrapMap
