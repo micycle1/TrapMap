@@ -2,8 +2,10 @@ package micycle.trapmap;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -12,6 +14,7 @@ import micycle.trapmap.graph.Leaf;
 import micycle.trapmap.graph.Node;
 import micycle.trapmap.graph.XNode;
 import micycle.trapmap.graph.YNode;
+import processing.core.PConstants;
 import processing.core.PShape;
 import processing.core.PVector;
 
@@ -36,6 +39,14 @@ public class TrapMap {
 	private PVector leftBound, rightBound; // coordinates of bounding box: lower left & upper right corners
 
 	/**
+	 * Internal affine x-shear factor: x' = x + SHEAR*y.
+	 * <p>
+	 * Using an irrational value removes degeneracies (distinct vertices sharing x,
+	 * vertical segments) while preserving topology (affine transform).
+	 */
+	static final double SHEAR = Math.sqrt(2) - 1.0;
+
+	/**
 	 * Builds a trapezoidal map from a collection of line segments (or a planar
 	 * straight-line graph).
 	 * <p>
@@ -55,21 +66,31 @@ public class TrapMap {
 	 * @param segments a list of line segments from which to build a trapezoidal map
 	 */
 	public TrapMap(Collection<Segment> segments) {
-		if (!(segments instanceof Set)) {
-			/*
-			 * Create as HashSet to both remove possible duplicates & shuffle the
-			 * collection. "Size of D and query time depend on insertion order".
-			 */
-			segments = new HashSet<>(segments);
+		if (segments == null) {
+			throw new IllegalArgumentException("segments cannot be null");
 		}
-		process(segments);
+		// Deduplicate user-provided segments first
+		final Collection<Segment> unique = (segments instanceof Set) ? segments : new HashSet<>(segments);
+
+		// Shear-copy for robust construction (don't mutate user segments)
+		final List<Segment> sheared = new ArrayList<>(unique.size());
+		for (Segment s : unique) {
+			if (s == null) {
+				continue;
+			}
+			final Segment ss = new Segment(shear(s.getLeftPoint()), shear(s.getRightPoint()));
+			ss.faceA = s.faceA;
+			ss.faceB = s.faceB;
+			sheared.add(ss);
+		}
+		process(sheared);
 	}
 
 	/**
 	 * Builds a trapezoidal map from a collection of polygonal shapes.
 	 * <p>
 	 * Shapes should not overlap, however they can share edges.
-	 * 
+	 *
 	 * <p>
 	 * When a TrapMap is constructed from polygons, calling
 	 * {@link #findFace(PVector) findFace()} for a query point will return a
@@ -78,7 +99,7 @@ public class TrapMap {
 	 * The map structure (a partitioning of the plane into neighboring trapezoids)
 	 * and the search structure (a directed graph) are both built upon object
 	 * construction.
-	 * 
+	 *
 	 * @param polygons a list of disjoint polygonal shapes. Shapes may share edges /
 	 *                 touch (forming a 'Planar graph') but interiors cannot
 	 *                 overlap. assuming non-nested/non-overlapping polygons
@@ -87,17 +108,17 @@ public class TrapMap {
 	public TrapMap(List<PShape> polygons) {
 		final Map<Segment, Segment> segments = new HashMap<>(polygons.size() * 3);
 		for (PShape polygon : polygons) {
-			if (polygon.getFamily() == PShape.PRIMITIVE || polygon.getFamily() == PShape.GROUP) {
+			if (polygon.getFamily() == PShape.PRIMITIVE || polygon.getFamily() == PConstants.GROUP) {
 				continue; // process polygonal shapes only
 			}
 			for (int i = 0; i < polygon.getVertexCount(); i++) {
 				Segment s = null;
 				if (i < polygon.getVertexCount() - 1) {
-					s = new Segment(polygon.getVertex(i), polygon.getVertex(i + 1), polygon);
+					s = new Segment(shear(polygon.getVertex(i)), shear(polygon.getVertex(i + 1)), polygon);
 				} else { // at last vertex
 					if (polygon.isClosed() || !polygon.getVertex(0).equals(polygon.getVertex(polygon.getVertexCount() - 1))) {
 						// create a segment between first and last vertices to close shape
-						s = new Segment(polygon.getVertex(polygon.getVertexCount() - 1), polygon.getVertex(0), polygon);
+						s = new Segment(shear(polygon.getVertex(polygon.getVertexCount() - 1)), shear(polygon.getVertex(0)), polygon);
 					} else {
 						continue;
 					}
@@ -116,13 +137,18 @@ public class TrapMap {
 	}
 
 	private void process(Collection<Segment> segments) {
+		if (segments == null || segments.isEmpty()) {
+			throw new IllegalArgumentException("Cannot build TrapMap with no segments.");
+		}
 		// 1. Determine a bounding box for the segments
 		Trapezoid bounds = computeBounds(segments);
 		Leaf f = new Leaf(bounds);
 		bounds.setLeaf(f);
 		root = f;
 
-		Segment[] segs = segments.toArray(new Segment[segments.size()]); // relabel array
+		Segment[] segs = segments.toArray(new Segment[0]); // relabel array
+		// Randomize insertion order (important for expected performance) TODO
+//		Collections.shuffle(Arrays.asList(segs), ThreadLocalRandom.current());
 
 		// 2. Incrementally construct trapezoidal (using randomized segment set)
 		for (Segment seg : segs) {
@@ -353,8 +379,7 @@ public class TrapMap {
 						// merge trapezoids aTop through bTop
 						// we only want one trapezoid, so we just have bTop-aTop+1 pointers to it for
 						// now
-						Trapezoid tempMerge = new Trapezoid(topArr[aTop].getLeftBound(), topArr[bTop].getRightBound(),
-								topArr[aTop].getUpperBound(), seg);
+						Trapezoid tempMerge = new Trapezoid(topArr[aTop].getLeftBound(), topArr[bTop].getRightBound(), topArr[aTop].getUpperBound(), seg);
 						for (int k = aTop; k <= bTop; k++) {
 							// now there are duplicates of the same trapezoid unfortunately, but I think if
 							// we link them together left to right
@@ -367,8 +392,7 @@ public class TrapMap {
 					if (botArr[j].getRightBound() != null) {
 						bBot = j;
 						// merge trapezoids aBot through bBot
-						Trapezoid tempMerge = new Trapezoid(botArr[aBot].getLeftBound(), botArr[bBot].getRightBound(), seg,
-								botArr[aBot].getLowerBound());
+						Trapezoid tempMerge = new Trapezoid(botArr[aBot].getLeftBound(), botArr[bBot].getRightBound(), seg, botArr[aBot].getLowerBound());
 						for (int k = aBot; k <= bBot; k++) {
 							botArr[k] = tempMerge;
 						}
@@ -444,8 +468,7 @@ public class TrapMap {
 				}
 				if (!seg.getRightPoint().equals(list[list.length - 1].getData().getRightBound())) {
 					// there is a rightmost trapezoid
-					rightmost = new Trapezoid(seg.getRightPoint(), oldRight.getRightBound(), oldRight.getUpperBound(),
-							oldRight.getLowerBound());
+					rightmost = new Trapezoid(seg.getRightPoint(), oldRight.getRightBound(), oldRight.getUpperBound(), oldRight.getLowerBound());
 				}
 
 				// add remaining trapezoid links at the end
@@ -569,14 +592,29 @@ public class TrapMap {
 		float maxx = -Float.MAX_VALUE;
 		float miny = Float.MAX_VALUE;
 		float maxy = -Float.MAX_VALUE;
+		boolean foundAny = false;
 		for (Segment seg : segments) {
 			if (seg != null) {
+				foundAny = true;
 				minx = Math.min(minx, seg.getMinX());
 				maxx = Math.max(maxx, seg.getMaxX());
 				miny = Math.min(miny, seg.getMinY());
 				maxy = Math.max(maxy, seg.getMaxY());
 			}
 		}
+		if (!foundAny) {
+			throw new IllegalArgumentException("segments must contain at least one non-null segment");
+		}
+
+		// pad bounds to avoid endpoints lying exactly on the bounding box
+		final float dx = maxx - minx;
+		final float dy = maxy - miny;
+		final float pad = Math.max(dx, dy) * 0.01f + 1f;
+		minx -= pad;
+		maxx += pad;
+		miny -= pad;
+		maxy += pad;
+
 		// create a trapezoid using the bounding box
 		leftBound = new PVector(minx, miny);
 		rightBound = new PVector(maxx, maxy);
@@ -628,11 +666,23 @@ public class TrapMap {
 		list.add(previous);
 		while (compareTo(s.getRightPoint().x, s.getRightPoint().y, previous.getData().getRightBound()) > 0) {
 			// choose the next trapezoid in the sequence
-			if (TrapMap.isPointAboveLine(previous.getData().getRightBound(), s)) {
-				previous = previous.getData().getLowerRightNeighbor().getLeaf();
+			final Trapezoid cur = previous.getData();
+			Trapezoid next;
+			if (TrapMap.isPointAboveLine(cur.getRightBound(), s)) {
+				next = cur.getLowerRightNeighbor();
+				if (next == null) {
+					next = cur.getUpperRightNeighbor();
+				}
 			} else {
-				previous = previous.getData().getUpperRightNeighbor().getLeaf();
+				next = cur.getUpperRightNeighbor();
+				if (next == null) {
+					next = cur.getLowerRightNeighbor();
+				}
 			}
+			if (next == null) {
+				throw new IllegalStateException("Broken trapezoid neighbour chain while following segment " + s);
+			}
+			previous = next.getLeaf();
 			list.add(previous);
 		}
 
@@ -673,13 +723,18 @@ public class TrapMap {
 	 * This method is identical to {@link #findContainingTrapezoid(double, double)
 	 * findContainingTrapezoid()}, except for the case where the point does not lie
 	 * inside any trapezoid.
-	 * 
+	 *
 	 * @param x x-coordinate of query point
 	 * @param y y-coordinate of query point
 	 * @return the trapezoid that contains the query point (or the nearest trapezoid
 	 *         if none contain the point)
 	 */
 	public Trapezoid findNearestTrapezoid(double x, double y) {
+		final double sx = shearX(x, y);
+		return findNearestTrapezoidSheared(sx, y);
+	}
+
+	private Trapezoid findNearestTrapezoidSheared(double x, double y) {
 		Node current = root;
 		while (!(current instanceof Leaf)) {
 			if (current instanceof XNode) { // point query: does p lie to the left or the right of a given point?
@@ -707,17 +762,18 @@ public class TrapMap {
 	 * This method is identical to {@link #findNearestTrapezoid(double, double)
 	 * findNearestTrapezoid()}, except for the case where the point does not lie
 	 * inside any trapezoid.
-	 * 
+	 *
 	 * @param x x-coordinate of query point
 	 * @param y y-coordinate of query point
 	 * @return the trapezoid that contains the query point (or NULL if none contain
 	 *         the point)
 	 */
 	public Trapezoid findContainingTrapezoid(double x, double y) {
-		if ((x < leftBound.x || x > rightBound.x || y < leftBound.y || y > rightBound.y)) {
+		final double sx = shearX(x, y); // x' = x + SHEAR*y
+		if ((sx < leftBound.x || sx > rightBound.x || y < leftBound.y || y > rightBound.y)) {
 			return null;
 		}
-		return findNearestTrapezoid(x, y);
+		return findNearestTrapezoidSheared(sx, y);
 	}
 
 	/**
@@ -727,7 +783,7 @@ public class TrapMap {
 	 * Use this method to find faces that emerge from the plane when it is
 	 * paritioned using line segments (when the TrapMap has been constructed from
 	 * line segments).
-	 * 
+	 *
 	 * @param x x-coordinate of query point
 	 * @param y y-coordinate of query point
 	 * @return a set of faces that make up the face that contains the query point.
@@ -747,25 +803,58 @@ public class TrapMap {
 	 * constructor was used); if the TrapMap was constructed from line segments,
 	 * this method will always return null — use
 	 * {@link #findFaceTrapezoids(double, double) findFaceTrapezoids()} instead.
-	 * 
+	 *
 	 * @param x x-coordinate of query point
 	 * @param y y-coordinate of query point
 	 * @return polygon which contains the query point; otherwise null if no polygon
 	 *         contains the point
 	 */
 	public PShape findContainingPolygon(double x, double y) {
-		return findNearestTrapezoid(x, y).getFace();
+		final Trapezoid t = findContainingTrapezoid(x, y);
+		if (t == null) {
+			return null;
+		}
+
+		final Segment top = t.getUpperBound();
+		final Segment bot = t.getLowerBound();
+
+		// At most 4 candidate polygons (top/bottom segment can each have faceA/faceB)
+		final HashSet<PShape> candidates = new HashSet<>(4);
+		if (top != null) {
+			if (top.faceA != null) {
+				candidates.add(top.faceA);
+			}
+			if (top.faceB != null) {
+				candidates.add(top.faceB);
+			}
+		}
+		if (bot != null) {
+			if (bot.faceA != null) {
+				candidates.add(bot.faceA);
+			}
+			if (bot.faceB != null) {
+				candidates.add(bot.faceB);
+			}
+		}
+
+		for (PShape poly : candidates) {
+			if (pointInPolygon(poly, x, y)) {
+				return poly;
+			}
+		}
+		return null;
 	}
 
 	/**
 	 * Returns all the trapezoids contained in the trapezoid map.
-	 * 
+	 *
 	 * @return list of all trapezoids
 	 */
 	public List<Trapezoid> getAllTrapezoids() {
 		if (trapezoids == null) { // build lazily
 			final Set<Leaf> leaves = new HashSet<>();
-			recurseChildNodes(root, leaves);
+			final Set<Node> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+			recurseChildNodes(root, leaves, visited);
 
 			trapezoids = new ArrayList<>(leaves.size());
 			leaves.forEach(l -> {
@@ -804,15 +893,14 @@ public class TrapMap {
 	 * @return true if on or above the segment; false otherwise
 	 */
 	private static boolean isPointAboveLine(double x, double y, Segment s) {
-		return (x - s.getLeftPoint().x) * s.getRightPoint().y + (s.getRightPoint().x - x) * s.getLeftPoint().y < y
-				* (s.getRightPoint().x - s.getLeftPoint().x);
+		return (x - s.getLeftPoint().x) * s.getRightPoint().y + (s.getRightPoint().x - x) * s.getLeftPoint().y < y * (s.getRightPoint().x - s.getLeftPoint().x);
 	}
 
 	/**
 	 * Checks if the input point on the given old segment lies above or below the
 	 * new segment. If the input PVector lies on the new segment, we determine
 	 * above/below by which segment has the higher slope.
-	 * 
+	 *
 	 * @param p    The PVector under consideration
 	 * @param old  The segment which the PVector lies on
 	 * @param pseg The segment to compare the PVector to
@@ -838,15 +926,16 @@ public class TrapMap {
 		return isPointAboveLine(p, old);
 	}
 
-	private static void recurseChildNodes(Node n, Set<Leaf> leaves) {
-		if (!leaves.contains(n)) {
-			if (!(n instanceof Leaf)) {
-				recurseChildNodes(n.getLeftChildNode(), leaves);
-				recurseChildNodes(n.getRightChildNode(), leaves);
-			} else {
-				leaves.add((Leaf) n);
-			}
+	private static void recurseChildNodes(Node n, Set<Leaf> leaves, Set<Node> visited) {
+		if (n == null || !visited.add(n)) {
+			return;
 		}
+		if (n instanceof Leaf) {
+			leaves.add((Leaf) n);
+			return;
+		}
+		recurseChildNodes(n.getLeftChildNode(), leaves, visited);
+		recurseChildNodes(n.getRightChildNode(), leaves, visited);
 	}
 
 	private static int compareTo(double x, double y, PVector b) {
@@ -858,5 +947,60 @@ public class TrapMap {
 		} else {
 			return 1;
 		}
+	}
+
+	private static PVector shear(PVector p) {
+		return new PVector((float) (p.x + SHEAR * p.y), p.y, p.z);
+	}
+
+	private static double shearX(double x, double y) {
+		return x + SHEAR * y;
+	}
+
+	private static boolean pointInPolygon(PShape poly, double x, double y) {
+		final int n = poly.getVertexCount();
+		if (n < 3) {
+			return false;
+		}
+
+		boolean inside = false;
+		for (int i = 0, j = n - 1; i < n; j = i++) {
+			final PVector a = poly.getVertex(j);
+			final PVector b = poly.getVertex(i);
+
+			// boundary-inclusive
+//			if (pointOnSegment(x, y, a, b, 1e-9)) {
+//				return true;
+//			}
+
+			final boolean cond = ((b.y > y) != (a.y > y));
+			if (cond) {
+				final double xInt = (a.x - b.x) * (y - b.y) / (a.y - b.y) + b.x;
+				if (x < xInt) {
+					inside = !inside;
+				}
+			}
+		}
+		return inside;
+	}
+
+	private static boolean pointOnSegment(double px, double py, PVector a, PVector b, double eps) {
+		final double ax = a.x, ay = a.y;
+		final double bx = b.x, by = b.y;
+
+		// cross product must be ~0 for collinearity
+		final double cross = (px - ax) * (by - ay) - (py - ay) * (bx - ax);
+		if (Math.abs(cross) > eps) {
+			return false;
+		}
+
+		// dot product must be within segment extents
+		final double dot = (px - ax) * (bx - ax) + (py - ay) * (by - ay);
+		if (dot < -eps) {
+			return false;
+		}
+
+		final double lenSq = (bx - ax) * (bx - ax) + (by - ay) * (by - ay);
+		return dot <= lenSq + eps;
 	}
 }

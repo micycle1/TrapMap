@@ -2,6 +2,7 @@ package micycle.trapmap;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import micycle.trapmap.graph.Leaf;
 import processing.core.PConstants;
@@ -16,7 +17,7 @@ import processing.core.PVector;
  * <li>A top segment top(∆)</li>
  * <li>A left vertex leftp(∆)</li>
  * <li>A right vertex rightp(∆)</li>
- * 
+ *
  * @author Tyler Chenhall
  * @author Michael Carleton
  */
@@ -74,7 +75,7 @@ public final class Trapezoid {
 
 	/**
 	 * Get the left bounding point
-	 * 
+	 *
 	 * @return The left vertex
 	 */
 	public PVector getLeftBound() {
@@ -83,7 +84,7 @@ public final class Trapezoid {
 
 	/**
 	 * Get the right bounding point
-	 * 
+	 *
 	 * @return The right bounding vertex
 	 */
 	public PVector getRightBound() {
@@ -92,7 +93,7 @@ public final class Trapezoid {
 
 	/**
 	 * Get the lower bounding segment
-	 * 
+	 *
 	 * @return The lower segment
 	 */
 	public Segment getLowerBound() {
@@ -101,7 +102,7 @@ public final class Trapezoid {
 
 	/**
 	 * Get the upper bounding segment for the trapezoid
-	 * 
+	 *
 	 * @return The upper segment
 	 */
 	public Segment getUpperBound() {
@@ -111,7 +112,7 @@ public final class Trapezoid {
 	/**
 	 * Get the trapezoid which lies to the left of this trapezoid below the left
 	 * boundary vertex
-	 * 
+	 *
 	 * @return The lower left neighbor (possibly null)
 	 */
 	public Trapezoid getLowerLeftNeighbor() {
@@ -121,7 +122,7 @@ public final class Trapezoid {
 	/**
 	 * Get the trapezoid which lies to the left of this one, above the left boundary
 	 * vertex
-	 * 
+	 *
 	 * @return the upper left neighbor trapezoid (possibly null)
 	 */
 	public Trapezoid getUpperLeftNeighbor() {
@@ -154,7 +155,7 @@ public final class Trapezoid {
 
 	/**
 	 * Set the leaf which contains this trapezoid
-	 * 
+	 *
 	 * @param l The leaf containing this trapezoid
 	 */
 	void setLeaf(Leaf l) {
@@ -163,7 +164,7 @@ public final class Trapezoid {
 
 	/**
 	 * Get the leaf containing this trapezoid
-	 * 
+	 *
 	 * @return The leaf pointing to this trapezoid
 	 */
 	Leaf getLeaf() {
@@ -171,53 +172,55 @@ public final class Trapezoid {
 	}
 
 	/**
-	 * Gets the mapped polygonal face that this trapezoid is a part of.
-	 * 
-	 * @return Null if trapezoid lies outside polygons, or no polygons were set up.
+	 * Returns the polygonal face (original {@link PShape}) associated with this
+	 * trapezoid, if any.
+	 * <p>
+	 * <b>Important:</b> This value is derived from the trapezoid's boundary
+	 * segments' {@code faceA/faceB} references and is therefore only a
+	 * <i>topological association</i> rather than a guaranteed point-in-polygon
+	 * classification.
+	 * <p>
+	 * In particular, for concave polygons (or more complex planar graphs), it is
+	 * possible for a trapezoid that lies outside the polygon to still be bounded
+	 * above and below by segments belonging to that polygon; in such cases this
+	 * method may return a non-null face even though a query point in the trapezoid
+	 * is not contained by the polygon.
+	 * <p>
+	 * If you need a strict containment result for a query point, use
+	 * {@link micycle.trapmap.TrapMap#findContainingPolygon(double, double)
+	 * findContainingPolygon()} (which should perform a geometric containment check)
+	 * rather than relying on this method alone.
+	 *
+	 * @return the associated polygon face, or {@code null} if none is associated or
+	 *         if the map was built from segments only.
 	 */
 	public PShape getFace() {
 		if (!computedFace) {
-			final PShape f1 = topSeg.faceA;
-			final PShape f2 = topSeg.faceB;
-			final PShape f3 = botSeg.faceA;
-			final PShape f4 = botSeg.faceB;
+			computedFace = true;
+			if (topSeg == null || botSeg == null) {
+				face = null;
+				return null;
+			}
 
-			/*
-			 * If the trapezoid is mapped to a face, then the polygonal face in which the
-			 * trapezoid lies can be computed by first retrieving the enclosing segments,
-			 * and then finding the face that is shared by two of these segments (this is
-			 * the face that is properly enclosed by the trapezoid's top and bottom
-			 * segments). NOTE doesn't always work on very concave shapes.
-			 */
-			if (f1 != null) {
-				if (f1 == f2 || f1 == f3 || f1 == f4) {
-					face = f1;
-					computedFace = true;
-					return face;
-				}
-			}
-			if (f2 != null) {
-				if (f2 == f3 || f2 == f4) {
-					face = f2;
-					computedFace = true;
-					return face;
-				}
-			}
-			if (f3 != null) {
-				if (f3 == f4) {
-					face = f3;
-					computedFace = true;
-					return face;
-				}
+			final PShape tA = topSeg.faceA;
+			final PShape tB = topSeg.faceB;
+			final PShape bA = botSeg.faceA;
+			final PShape bB = botSeg.faceB;
+
+			if (tA != null && (tA == bA || tA == bB)) {
+				face = tA;
+			} else if (tB != null && (tB == bA || tB == bB)) {
+				face = tB;
+			} else {
+				face = null;
 			}
 		}
-
 		return face;
 	}
 
 	/**
 	 * Return the boundary polygon for this trapezoid
-	 * 
+	 *
 	 * @return The boundary Polygon
 	 */
 	public PShape getBoundaryPolygon() {
@@ -230,7 +233,7 @@ public final class Trapezoid {
 	/**
 	 * Gets the four coordinates that make up this trapezoid (from top left
 	 * clockwise).
-	 * 
+	 *
 	 * @return
 	 */
 	public List<PVector> getBoundaryVertices() {
@@ -257,25 +260,36 @@ public final class Trapezoid {
 		polygon.setFill(true);
 		polygon.setFill(-255);
 		polygon.beginShape();
-		polygon.vertex((int) tl.x, (int) tl.y);
-		polygon.vertex((int) tr.x, (int) tr.y);
-		polygon.vertex((int) br.x, (int) br.y);
-		polygon.vertex((int) bl.x, (int) bl.y);
+		polygon.vertex(tl.x, tl.y);
+		polygon.vertex(tr.x, tr.y);
+		polygon.vertex(br.x, br.y);
+		polygon.vertex(bl.x, bl.y);
 		polygon.endShape(PConstants.CLOSE);
 		return polygon;
 	}
 
 	/**
 	 * Return true if this trapezoid has zero width
-	 * 
+	 *
 	 * @return True if the trapezoid is a sliver with zero width
 	 */
 	boolean hasZeroWidth() {
-		return leftP.x == rightP.x;
+		// In this implementation left/right can be temporarily null during merging
+		if (leftP == null || rightP == null) {
+			return true;
+		}
+		// Under symbolic shear, equal-x alone is NOT "zero width" – only same vertex
+		// is.
+		return leftP.x == rightP.x && leftP.y == rightP.y;
 	}
 
 	boolean hasZeroHeight() {
-		return leftP.y == rightP.y;
+		if (leftP == null || rightP == null) {
+			return true;
+		}
+		// Approx: compare top/bottom at mid x
+		final float midX = (leftP.x + rightP.x) * 0.5f;
+		return Math.abs(topSeg.intersect(midX).y - botSeg.intersect(midX).y) < 1e-6f;
 	}
 
 	@Override
@@ -289,18 +303,18 @@ public final class Trapezoid {
 
 	@Override
 	public int hashCode() {
-		return (topSeg.hashCode()) ^ botSeg.hashCode() ^ leftP.hashCode() ^ rightP.hashCode();
+		return Objects.hash(topSeg, botSeg, leftP, rightP);
 	}
 
 	@Override
-	/**
-	 * Two trapezoids are equal iff they have the same bounding segments
-	 */
-	public boolean equals(Object t) {
-		if (!(t instanceof Trapezoid)) {
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (!(o instanceof Trapezoid)) {
 			return false;
 		}
-		final Trapezoid tt = (Trapezoid) t;
-		return (this.topSeg.equals(tt.topSeg) && this.botSeg.equals(tt.botSeg));
+		final Trapezoid t = (Trapezoid) o;
+		return Objects.equals(topSeg, t.topSeg) && Objects.equals(botSeg, t.botSeg) && Objects.equals(leftP, t.leftP) && Objects.equals(rightP, t.rightP);
 	}
 }
